@@ -17,7 +17,7 @@ function init (formats, options) {
     }
 
     return formats.serializers.serialize(mediaType, graph).then(function (serialized) {
-      res.set('Content-Type', mediaType)
+      res.setHeader('Content-Type', mediaType)
       res.end(serialized)
     })
   }
@@ -27,7 +27,7 @@ function init (formats, options) {
     options.bodyParser(req, res, function () {
       res.sendGraph = sendGraph
 
-      var mediaType = req.get('Content-Type') || options.defaultMediaType
+      var mediaType = 'content-type' in req.headers ? req.headers['content-type'] : options.defaultMediaType
 
       // empty body
       if (typeof req.body === 'object' && Object.keys(req.body).length === 0) {
