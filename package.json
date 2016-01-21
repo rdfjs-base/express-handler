@@ -1,6 +1,6 @@
 {
   "name": "rdf-body-parser",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "RDF body parsing middleware",
   "main": "index.js",
   "scripts": {
