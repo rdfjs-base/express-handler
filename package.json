@@ -22,7 +22,9 @@
     "url": "https://github.com/rdf-ext/rdf-body-parser/issues"
   },
   "homepage": "https://github.com/rdf-ext/rdf-body-parser",
-  "dependencies": {},
+  "dependencies": {
+    "body-parser": "^1.14.2"
+  },
   "devDependencies": {
     "bluebird": "^3.1.1",
     "express": "^4.13.3",
