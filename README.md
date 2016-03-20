@@ -9,13 +9,9 @@ Import the module:
 
     var rdfBodyParser = require('rdf-body-parser')
 
-Also import the commons format bundle. The formats parameter is required!
-
-    var rdfFormats = require('rdf-formats-common')()
-
 The rdf-body-parser module returns a function to create a middleware. So let's call that function:
 
-    app.use(rdfBodyParser(rdfFormats))
+    app.use(rdfBodyParser())
 
 Now you can use the `.graph` property and `.sendGraph` function:
 

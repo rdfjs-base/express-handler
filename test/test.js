@@ -42,12 +42,13 @@ describe('rdf-body-parser', function () {
       var touched = false
       var app = express()
 
-      app.use(rdfBodyParser(formats, {
+      app.use(rdfBodyParser({
         bodyParser: function (req, res, next) {
           touched = true
 
           next()
-        }
+        },
+        formats: formats
       }))
 
       request(app)
@@ -68,7 +69,7 @@ describe('rdf-body-parser', function () {
       var parsed = false
       var app = express()
 
-      app.use(rdfBodyParser(formats))
+      app.use(rdfBodyParser({formats: formats}))
       app.use(function (req, res, next) {
         parsed = req.body && req.body === 'test'
 
@@ -89,11 +90,37 @@ describe('rdf-body-parser', function () {
         })
     })
 
+    it('should use the default formats if none were given', function (done) {
+      var parsed = false
+      var app = express()
+
+      app.use(rdfBodyParser())
+      app.use(function (req, res, next) {
+        parsed = req.graph && req.graph.toArray().shift().object.toString() === 'http://example.org/object'
+
+        next()
+      })
+
+      request(app)
+        .post('/')
+        .set('Content-Type', 'text/turtle')
+        .send('<http://example.org/subject> <http://example.org/predicate> <http://example.org/object> .')
+        .end(function (err, res) {
+          if (err) {
+            return done(err)
+          }
+
+          asyncAssert(done, function () {
+            assert(parsed)
+          })
+        })
+    })
+
     it('should use the media type defined in Content-Type header to parse the data', function (done) {
       var mediaType
       var app = express()
 
-      app.use(rdfBodyParser(formats))
+      app.use(rdfBodyParser({formats: formats}))
       app.use(function (req, res, next) {
         mediaType = (JSON.parse(req.graph) || {}).mediaType
 
@@ -119,7 +146,7 @@ describe('rdf-body-parser', function () {
       var hasGraph = true
       var app = express()
 
-      app.use(rdfBodyParser(formats))
+      app.use(rdfBodyParser({formats: formats}))
       app.use(function (req, res, next) {
         hasGraph = !!req.graph
 
@@ -143,7 +170,7 @@ describe('rdf-body-parser', function () {
       var graph
       var app = express()
 
-      app.use(rdfBodyParser(formats))
+      app.use(rdfBodyParser({formats: formats}))
       app.use(function (req, res, next) {
         graph = JSON.parse(req.graph)
 
@@ -169,9 +196,11 @@ describe('rdf-body-parser', function () {
       var app = express()
 
       app.use(rdfBodyParser({
-        parsers: {
-          parse: function () {
-            return Promise.reject(new Error())
+        formats: {
+          parsers: {
+            parse: function () {
+              return Promise.reject(new Error())
+            }
           }
         }
       }))
@@ -201,7 +230,7 @@ describe('rdf-body-parser', function () {
       var searched = false
       var app = express()
 
-      app.use(rdfBodyParser(formats))
+      app.use(rdfBodyParser({formats: formats}))
       app.use(function (req, res, next) {
         res.sendGraph('test')
 
@@ -231,7 +260,7 @@ describe('rdf-body-parser', function () {
       var rejected = false
       var app = express()
 
-      app.use(rdfBodyParser(formats))
+      app.use(rdfBodyParser({formats: formats}))
       app.use(function (req, res, next) {
         res.sendGraph('test').catch(function () {
           rejected = true
@@ -260,7 +289,7 @@ describe('rdf-body-parser', function () {
     it('should send serialized graph with Content-Type header', function (done) {
       var app = express()
 
-      app.use(rdfBodyParser(formats))
+      app.use(rdfBodyParser({formats: formats}))
       app.use(function (req, res, next) {
         res.sendGraph('test')
 
@@ -293,12 +322,14 @@ describe('rdf-body-parser', function () {
       var app = express()
 
       app.use(rdfBodyParser({
-        serializers: {
-          list: function () {
-            return ['text/plain']
-          },
-          serialize: function () {
-            return Promise.reject(new Error())
+        formats: {
+          serializers: {
+            list: function () {
+              return ['text/plain']
+            },
+            serialize: function () {
+              return Promise.reject(new Error())
+            }
           }
         }
       }))

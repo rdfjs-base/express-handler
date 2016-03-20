@@ -1,22 +1,24 @@
 var bodyParser = require('body-parser')
+var formats = require('rdf-formats-common')()
 
-function init (formats, options) {
+function init (options) {
   options = options || {}
 
   // default options
   options.bodyParser = options.bodyParser || bodyParser.text({type: '*/*'})
+  options.formats = options.formats || formats
 
   // .sendGraph function
   var sendGraph = function (graph, mediaType) {
     var res = this
 
-    mediaType = mediaType || res.req.accepts(formats.serializers.list()) || options.defaultMediaType
+    mediaType = mediaType || res.req.accepts(options.formats.serializers.list()) || options.defaultMediaType
 
     if (!mediaType || typeof mediaType !== 'string') {
       return Promise.reject(new Error('no serializer found'))
     }
 
-    return formats.serializers.serialize(mediaType, graph).then(function (serialized) {
+    return options.formats.serializers.serialize(mediaType, graph).then(function (serialized) {
       res.setHeader('Content-Type', mediaType)
       res.end(serialized)
     })
@@ -34,7 +36,7 @@ function init (formats, options) {
         return next()
       }
 
-      formats.parsers.parse(mediaType, req.body).then(function (graph) {
+      options.formats.parsers.parse(mediaType, req.body).then(function (graph) {
         req.graph = graph
 
         next()
