@@ -286,6 +286,66 @@ describe('rdf-body-parser', function () {
         })
     })
 
+    it('should pick a media type if multiple are given', function (done) {
+      var app = express()
+
+      app.use(rdfBodyParser({formats: formats}))
+      app.use(function (req, res, next) {
+        res.sendGraph('test', 'text/html text/plain')
+
+        next()
+      })
+
+      formats.serializers.list = function () {
+        return ['text/plain']
+      }
+
+      request(app)
+        .get('/')
+        .set('Accept', 'text/plain')
+        .end(function (err, res) {
+          if (err) {
+            return done(err)
+          }
+
+          asyncAssert(done, function () {
+            var result = JSON.parse(res.text) || {}
+
+            assert.equal(result.mediaType, 'text/plain')
+          })
+        })
+    })
+
+    it('should pick a media type if multiple are given in an array', function (done) {
+      var app = express()
+
+      app.use(rdfBodyParser({formats: formats}))
+      app.use(function (req, res, next) {
+        res.sendGraph('test', ['text/html', 'text/plain'])
+
+        next()
+      })
+
+      formats.serializers.list = function () {
+        return ['text/plain']
+      }
+
+      request(app)
+        .get('/')
+        .set('Accept', 'text/plain')
+        .end(function (err, res) {
+          if (err) {
+            return done(err)
+          }
+
+          asyncAssert(done, function () {
+            var result = JSON.parse(res.text) || {}
+
+            assert.equal(result.mediaType, 'text/plain')
+          })
+        })
+    })
+
     it('should send serialized graph with Content-Type header', function (done) {
       var app = express()
 

@@ -13,6 +13,13 @@ function init (options) {
   var sendGraph = function (graph, mediaType) {
     var res = this
 
+    mediaType = res.req.accepts(mediaType)
+
+    // express returns ['*/*'] if no match was found
+    if (Array.isArray(mediaType)) {
+      mediaType = undefined
+    }
+
     mediaType = mediaType || res.req.accepts(options.formats.serializers.list()) || options.defaultMediaType
 
     if (!mediaType || typeof mediaType !== 'string') {
