@@ -23,11 +23,11 @@
   },
   "homepage": "https://github.com/rdf-ext/rdf-body-parser",
   "dependencies": {
+    "bluebird": "^3.1.1",
     "body-parser": "^1.14.2",
     "rdf-formats-common": "^0.3.0"
   },
   "devDependencies": {
-    "bluebird": "^3.1.1",
     "express": "^4.13.3",
     "mocha": "^2.3.3",
     "supertest": "^1.1.0"

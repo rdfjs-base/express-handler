@@ -1,3 +1,4 @@
+var Promise = require('bluebird')
 var bodyParser = require('body-parser')
 var formats = require('rdf-formats-common')()
 
@@ -20,7 +21,8 @@ function init (options) {
 
     return options.formats.serializers.serialize(mediaType, graph).then(function (serialized) {
       res.setHeader('Content-Type', mediaType)
-      res.end(serialized)
+
+      return Promise.promisify(res.end, {context: res})(serialized)
     })
   }
 

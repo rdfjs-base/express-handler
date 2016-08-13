@@ -317,6 +317,48 @@ describe('rdf-body-parser', function () {
         })
     })
 
+    it('should handle send errors', function (done) {
+      var errorCatched = false
+      var app = express()
+
+      app.use(rdfBodyParser({formats: formats}))
+      app.use(function (req, res, next) {
+        var end = res.end
+
+        res.end = function (data, callback) {
+          if (callback) {
+            callback(new Error())
+          }
+        }
+
+        res.sendGraph('test').catch(function () {
+          errorCatched = true
+
+          // restore original end method
+          res.end = end
+
+          next()
+        })
+      })
+
+      formats.serializers.list = function () {
+        return ['text/plain']
+      }
+
+      request(app)
+        .get('/')
+        .set('Accept', 'text/plain')
+        .end(function (err, res) {
+          if (err) {
+            return done(err)
+          }
+
+          asyncAssert(done, function () {
+            assert.equal(errorCatched, true)
+          })
+        })
+    })
+
     it('should reject on parser error', function (done) {
       var rejected = false
       var app = express()
