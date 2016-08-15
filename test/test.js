@@ -2,6 +2,7 @@
 
 var assert = require('assert')
 var express = require('express')
+var rdf = require('rdf-ext')
 var rdfBodyParser = require('../')
 var request = require('supertest')
 var Promise = require('bluebird')
@@ -455,6 +456,44 @@ describe('rdf-body-parser', function () {
             assert(rejected)
           })
         })
+    })
+  })
+
+  describe('.attach', function () {
+    it('should do nothing if there is already a .graph property and .sendGraph method', function () {
+      var graph = {}
+      var sendGraph = function () {}
+      var req = {graph: graph}
+      var res = {sendGraph: sendGraph}
+
+      return rdfBodyParser.attach(req, res).then(function () {
+        assert.equal(req.graph, graph)
+        assert.equal(res.sendGraph, sendGraph)
+      })
+    })
+
+    it('should parse the body and attach the .sendGraph method', function () {
+      var req = {
+        body: '<http://example.org/subject> <http://example.org/predicate> <http://example.org/object> .\n',
+        headers: {
+          'content-type': 'application/n-triples'
+        }
+      }
+
+      var res = {}
+
+      var graph = rdf.createGraph([
+        rdf.createTriple(
+          rdf.createNamedNode('http://example.org/subject'),
+          rdf.createNamedNode('http://example.org/predicate'),
+          rdf.createNamedNode('http://example.org/object')
+        )
+      ])
+
+      return rdfBodyParser.attach(req, res).then(function () {
+        assert.equal(req.graph.equals(graph), true)
+        assert.equal(typeof res.sendGraph, 'function')
+      })
     })
   })
 })

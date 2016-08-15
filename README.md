@@ -24,3 +24,19 @@ Now you can use the `.graph` property and `.sendGraph` function:
        // .sendGraph sends a graph to the client
        res.sendGraph(rdf.createGraph())
     })
+
+Attaching
+
+If you don't know if rdf-body-parser is used as middleware, it's possible to attach it dynamically.
+That is usefull inside of a middleware where you want to use an application specific instance (with options) or the default one.
+`.attach` has no callback parameter, instead it returns a `Promise`.
+
+    app.use(function (req, res, next) {
+      rdfBodyParser.attach(req, res).then(function () {
+        if (req.graph) {
+          console.log(req.graph.toString())
+        }
+
+        res.sendGraph(rdf.createGraph())
+      })
+    })

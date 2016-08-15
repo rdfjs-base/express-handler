@@ -56,4 +56,12 @@ function init (options) {
   }
 }
 
+init.attach = function (req, res, options) {
+  if (req.graph && res.sendGraph) {
+    return Promise.resolve()
+  }
+
+  return Promise.promisify(init(options))(req, res)
+}
+
 module.exports = init
