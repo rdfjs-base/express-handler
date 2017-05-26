@@ -1,6 +1,7 @@
 var Promise = require('bluebird')
 var bodyParser = require('body-parser')
 var formats = require('rdf-formats-common')()
+var httpErrors = require('http-errors')
 
 function init (options) {
   options = options || {}
@@ -23,7 +24,7 @@ function init (options) {
     mediaType = mediaType || res.req.accepts(options.formats.serializers.list()) || options.defaultMediaType
 
     if (!mediaType || typeof mediaType !== 'string') {
-      return Promise.reject(new Error('no serializer found'))
+      return Promise.reject(new httpErrors.NotAcceptable('no serializer found'))
     }
 
     return options.formats.serializers.serialize(mediaType, graph).then(function (serialized) {

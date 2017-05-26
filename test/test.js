@@ -258,13 +258,13 @@ describe('rdf-body-parser', function () {
     })
 
     it('should reject if no serializer was found', function (done) {
-      var rejected = false
+      var rejected = null
       var app = express()
 
       app.use(rdfBodyParser({formats: formats}))
       app.use(function (req, res, next) {
-        res.sendGraph('test').catch(function () {
-          rejected = true
+        res.sendGraph('test').catch(function (err) {
+          rejected = err
         })
 
         next()
@@ -282,7 +282,7 @@ describe('rdf-body-parser', function () {
           }
 
           asyncAssert(done, function () {
-            assert(rejected)
+            assert.equal(rejected.statusCode, 406)
           })
         })
     })
