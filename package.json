@@ -4,8 +4,7 @@
   "description": "RDF body parsing middleware",
   "main": "index.js",
   "scripts": {
-    "lint": "standard",
-    "test": "node_modules/.bin/mocha"
+    "test": "standard && mocha"
   },
   "repository": {
     "type": "git",
@@ -13,8 +12,11 @@
   },
   "keywords": [
     "rdf",
+    "rdfjs",
+    "rdf-ext",
     "express",
-    "parser"
+    "parser",
+    "serializer"
   ],
   "author": "Thomas Bergwinkl <bergi@axolotlfarm.org> (https://www.bergnet.org/people/bergi/card#me)",
   "license": "MIT",
@@ -25,12 +27,13 @@
   "dependencies": {
     "bluebird": "^3.1.1",
     "body-parser": "^1.14.2",
-    "rdf-formats-common": "^0.3.0"
+    "rdf-ext": "^1.0.0",
+    "rdf-formats-common": "^1.0.1",
+    "string-to-stream": "^1.1.0"
   },
   "devDependencies": {
     "express": "^4.13.3",
     "mocha": "^2.3.3",
-    "rdf-ext": "^0.3.0",
-    "supertest": "^1.1.0"
+    "supertest": "^3.0.0"
   }
 }

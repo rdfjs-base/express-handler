@@ -1,50 +1,65 @@
 /* global describe, it */
 
-var assert = require('assert')
-var express = require('express')
-var rdf = require('rdf-ext')
-var rdfBodyParser = require('../')
-var request = require('supertest')
-var Promise = require('bluebird')
+const assert = require('assert')
+const express = require('express')
+const rdf = require('rdf-ext')
+const rdfBodyParser = require('../')
+const request = require('supertest')
+const Readable = require('stream').Readable
 
-var formats = {
+const formats = {
   parsers: {
-    parse: function (mediaType, data) {
-      return Promise.resolve(JSON.stringify({
+    import: (mediaType, data) => {
+      const stream = new Readable({
+        objectMode: true,
+        read: () => {}
+      })
+
+      stream.push(JSON.stringify({
         mediaType: mediaType,
         data: data
       }))
+
+      stream.push(null)
+
+      return stream
     }
   },
   serializers: {
-    serialize: function (mediaType, data) {
-      return Promise.resolve(JSON.stringify({
+    import: (mediaType, data) => {
+      const stream = new Readable({
+        objectMode: true,
+        read: () => {}
+      })
+
+      stream.push(JSON.stringify({
         mediaType: mediaType,
         data: data
       }))
+
+      stream.push(null)
+
+      return stream
     }
   }
 }
 
-function asyncAssert (done, callback) {
-  Promise.resolve().then(callback).asCallback(done)
-}
-
-describe('rdf-body-parser', function () {
-  it('should return a middleware function', function () {
-    var middleware = rdfBodyParser()
+describe('rdf-body-parser', () => {
+  it('should return a middleware function', () => {
+    const middleware = rdfBodyParser()
 
     assert.equal(typeof middleware, 'function')
     assert.equal(middleware.length, 3)
   })
 
-  describe('bodyParser', function () {
-    it('should use options body parser if given', function (done) {
-      var touched = false
-      var app = express()
+  describe('request.graph', () => {
+    it('should use options body parser if given', () => {
+      const app = express()
+
+      let touched = false
 
       app.use(rdfBodyParser({
-        bodyParser: function (req, res, next) {
+        bodyParser: (req, res, next) => {
           touched = true
 
           next()
@@ -52,447 +67,356 @@ describe('rdf-body-parser', function () {
         formats: formats
       }))
 
-      request(app)
+      return request(app)
         .post('/')
         .send('test')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            assert(touched)
-          })
+        .then((res) => {
+          assert(touched)
         })
     })
 
-    it('should use the default body parser if none was given', function (done) {
-      var parsed = false
-      var app = express()
+    it('should use the default body parser if none was given', () => {
+      const app = express()
+
+      let parsed = false
 
       app.use(rdfBodyParser({formats: formats}))
-      app.use(function (req, res, next) {
+
+      app.use((req, res, next) => {
         parsed = req.body && req.body === 'test'
 
         next()
       })
 
-      request(app)
+      return request(app)
         .post('/')
         .send('test')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            assert(parsed)
-          })
+        .then((res) => {
+          assert(parsed)
         })
     })
 
-    it('should use the default formats if none were given', function (done) {
-      var parsed = false
-      var app = express()
+    it('should use the default formats if none were given', () => {
+      const app = express()
+
+      let parsed = false
 
       app.use(rdfBodyParser())
-      app.use(function (req, res, next) {
+
+      app.use((req, res, next) => {
         parsed = req.graph && req.graph.toArray().shift().object.toString() === 'http://example.org/object'
 
         next()
       })
 
-      request(app)
+      return request(app)
         .post('/')
         .set('Content-Type', 'text/turtle')
         .send('<http://example.org/subject> <http://example.org/predicate> <http://example.org/object> .')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            assert(parsed)
-          })
+        .then((res) => {
+          assert(parsed)
         })
     })
 
-    it('should use the media type defined in Content-Type header to parse the data', function (done) {
-      var mediaType
-      var app = express()
+    it('should use the media type defined in Content-Type header to parse the data', () => {
+      const app = express()
+
+      let mediaType
 
       app.use(rdfBodyParser({formats: formats}))
-      app.use(function (req, res, next) {
-        mediaType = (JSON.parse(req.graph) || {}).mediaType
+
+      app.use((req, res, next) => {
+        mediaType = JSON.parse(req.graph._quads[0]).mediaType
 
         next()
       })
 
-      request(app)
+      return request(app)
         .post('/')
         .set('Content-Type', 'text/plain')
         .send('test')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            assert.equal(mediaType, 'text/plain')
-          })
+        .then((res) => {
+          assert.equal(mediaType, 'text/plain')
         })
     })
 
-    it('should set .graph to null if no body was sent', function (done) {
-      var hasGraph = true
-      var app = express()
+    it('should set .graph to null if no body was sent', () => {
+      const app = express()
+
+      let hasGraph = true
 
       app.use(rdfBodyParser({formats: formats}))
-      app.use(function (req, res, next) {
+
+      app.use((req, res, next) => {
         hasGraph = !!req.graph
 
         next()
       })
 
-      request(app)
+      return request(app)
         .get('/')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            assert(!hasGraph)
-          })
+        .then((res) => {
+          assert(!hasGraph)
         })
     })
 
-    it('should parse graph and set assign it to .graph', function (done) {
-      var graph
-      var app = express()
+    it('should parse graph and set assign it to .graph', () => {
+      const app = express()
+
+      let graph
 
       app.use(rdfBodyParser({formats: formats}))
-      app.use(function (req, res, next) {
-        graph = JSON.parse(req.graph)
+
+      app.use((req, res, next) => {
+        graph = JSON.parse(req.graph._quads[0])
 
         next()
       })
 
-      request(app)
+      return request(app)
         .post('/')
         .send('test')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            assert.equal(graph.data, 'test')
-          })
+        .then((res) => {
+          assert.equal(graph.data._str, 'test')
         })
     })
 
-    it('should handle parser error', function (done) {
-      var errorThrown = false
-      var app = express()
+    it('should handle parser error', () => {
+      const app = express()
+
+      let errorThrown = false
 
       app.use(rdfBodyParser({
         formats: {
           parsers: {
-            parse: function () {
-              return Promise.reject(new Error())
+            import: () => {
+              const stream = new Readable({
+                read: () => {
+                  stream.emit('error', new Error())
+                }
+              })
+
+              return stream
             }
           }
         }
       }))
-      app.use(function (err, req, res, next) {
+
+      app.use((err, req, res, next) => {
         errorThrown = err instanceof Error
 
         next()
       })
 
-      request(app)
+      return request(app)
         .post('/')
         .send('test')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            assert(errorThrown)
-          })
+        .then((res) => {
+          assert(errorThrown)
         })
     })
   })
 
-  describe('sendGraph', function () {
-    it('should search for a serializer', function (done) {
-      var searched = false
-      var app = express()
+  describe('response.graph', () => {
+    it('should search for a serializer', () => {
+      const app = express()
+
+      let searched = false
 
       app.use(rdfBodyParser({formats: formats}))
-      app.use(function (req, res, next) {
-        res.sendGraph('test')
+
+      app.use((req, res, next) => {
+        res.graph('test').catch((err) => {}) // eslint-disable-line handle-callback-err
 
         next()
       })
 
-      formats.serializers.list = function () {
+      formats.serializers.list = () => {
         searched = true
 
         return []
       }
 
-      request(app)
+      return request(app)
         .get('/')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            assert(searched)
-          })
+        .then((res) => {
+          assert(searched)
         })
     })
 
-    it('should reject if no serializer was found', function (done) {
-      var rejected = null
-      var app = express()
+    it('should reject if no serializer was found', () => {
+      const app = express()
+
+      let rejected = null
 
       app.use(rdfBodyParser({formats: formats}))
-      app.use(function (req, res, next) {
-        res.sendGraph('test').catch(function (err) {
+
+      app.use((req, res, next) => {
+        res.graph('test').catch((err) => {
           rejected = err
         })
 
         next()
       })
 
-      formats.serializers.list = function () {
+      formats.serializers.list = () => {
         return []
       }
 
-      request(app)
+      return request(app)
         .get('/')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            assert.equal(rejected.statusCode, 406)
-          })
+        .then((res) => {
+          assert.equal(rejected.statusCode, 406)
         })
     })
 
-    it('should pick a media type if multiple are given', function (done) {
-      var app = express()
+    it('should pick a media type if multiple are given', () => {
+      const app = express()
 
       app.use(rdfBodyParser({formats: formats}))
-      app.use(function (req, res, next) {
-        res.sendGraph('test', 'text/html text/plain')
+
+      app.use((req, res, next) => {
+        res.graph('test', 'text/html text/plain')
 
         next()
       })
 
-      formats.serializers.list = function () {
+      formats.serializers.list = () => {
         return ['text/plain']
       }
 
-      request(app)
+      return request(app)
         .get('/')
         .set('Accept', 'text/plain')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            var result = JSON.parse(res.text) || {}
-
-            assert.equal(result.mediaType, 'text/plain')
-          })
+        .then((res) => {
+          assert.equal(JSON.parse(res.text).mediaType, 'text/plain')
         })
     })
 
-    it('should pick a media type if multiple are given in an array', function (done) {
-      var app = express()
+    it('should pick a media type if multiple are given in an array', () => {
+      const app = express()
 
       app.use(rdfBodyParser({formats: formats}))
-      app.use(function (req, res, next) {
-        res.sendGraph('test', ['text/html', 'text/plain'])
+
+      app.use((req, res, next) => {
+        res.graph('test', ['text/html', 'text/plain'])
 
         next()
       })
 
-      formats.serializers.list = function () {
+      formats.serializers.list = () => {
         return ['text/plain']
       }
 
-      request(app)
+      return request(app)
         .get('/')
         .set('Accept', 'text/plain')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            var result = JSON.parse(res.text) || {}
-
-            assert.equal(result.mediaType, 'text/plain')
-          })
+        .then((res) => {
+          assert.equal(JSON.parse(res.text).mediaType, 'text/plain')
         })
     })
 
-    it('should send serialized graph with Content-Type header', function (done) {
-      var app = express()
+    it('should send serialized graph with Content-Type header', () => {
+      const app = express()
 
       app.use(rdfBodyParser({formats: formats}))
-      app.use(function (req, res, next) {
-        res.sendGraph('test')
+
+      app.use((req, res, next) => {
+        res.graph('test')
 
         next()
       })
 
-      formats.serializers.list = function () {
+      formats.serializers.list = () => {
         return ['text/plain']
       }
 
-      request(app)
+      return request(app)
         .get('/')
         .set('Accept', 'text/plain')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
+        .then((res) => {
+          const result = JSON.parse(res.text)
 
-          asyncAssert(done, function () {
-            var result = JSON.parse(res.text) || {}
-
-            assert.equal(result.mediaType, 'text/plain')
-            assert.equal(result.data, 'test')
-          })
+          assert.equal(result.mediaType, 'text/plain')
+          assert.equal(result.data, 'test')
         })
     })
 
-    it('should handle send errors', function (done) {
-      var errorCatched = false
-      var app = express()
+    it('should reject on parser error', () => {
+      const app = express()
 
-      app.use(rdfBodyParser({formats: formats}))
-      app.use(function (req, res, next) {
-        var end = res.end
-
-        res.end = function (data, callback) {
-          if (callback) {
-            callback(new Error())
-          }
-        }
-
-        res.sendGraph('test').catch(function () {
-          errorCatched = true
-
-          // restore original end method
-          res.end = end
-
-          next()
-        })
-      })
-
-      formats.serializers.list = function () {
-        return ['text/plain']
-      }
-
-      request(app)
-        .get('/')
-        .set('Accept', 'text/plain')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            assert.equal(errorCatched, true)
-          })
-        })
-    })
-
-    it('should reject on parser error', function (done) {
-      var rejected = false
-      var app = express()
+      let rejected = false
 
       app.use(rdfBodyParser({
         formats: {
           serializers: {
-            list: function () {
+            list: () => {
               return ['text/plain']
             },
-            serialize: function () {
-              return Promise.reject(new Error())
+            import: () => {
+              const stream = new Readable({
+                read: () => {
+                  stream.emit('error', new Error())
+                }
+              })
+
+              return stream
             }
           }
         }
       }))
-      app.use(function (req, res, next) {
-        res.sendGraph('test').catch(function () {
+
+      app.use((req, res, next) => {
+        res.graph('test').catch(() => {
           rejected = true
         })
 
         next()
       })
 
-      request(app)
+      return request(app)
         .get('/')
         .set('Accept', 'text/plain')
-        .end(function (err, res) {
-          if (err) {
-            return done(err)
-          }
-
-          asyncAssert(done, function () {
-            assert(rejected)
-          })
+        .then((res) => {
+          assert(rejected)
         })
     })
   })
 
-  describe('.attach', function () {
-    it('should do nothing if there is already a .graph property and .sendGraph method', function () {
-      var graph = {}
-      var sendGraph = function () {}
-      var req = {graph: graph}
-      var res = {sendGraph: sendGraph}
+  describe('.attach', () => {
+    it('should do nothing if there is already a .graph property and .graph method', () => {
+      const graph = {}
+      const sendGraph = () => {}
+      const req = {graph: graph}
+      const res = {graph: sendGraph}
 
-      return rdfBodyParser.attach(req, res).then(function () {
+      return rdfBodyParser.attach(req, res).then(() => {
         assert.equal(req.graph, graph)
-        assert.equal(res.sendGraph, sendGraph)
+        assert.equal(res.graph, sendGraph)
       })
     })
 
-    it('should parse the body and attach the .sendGraph method', function () {
-      var req = {
+    it('should parse the body and attach the .graph method', () => {
+      const req = {
         body: '<http://example.org/subject> <http://example.org/predicate> <http://example.org/object> .\n',
         headers: {
           'content-type': 'application/n-triples'
         }
       }
 
-      var res = {}
+      const res = {}
 
-      var graph = rdf.createGraph([
-        rdf.createTriple(
-          rdf.createNamedNode('http://example.org/subject'),
-          rdf.createNamedNode('http://example.org/predicate'),
-          rdf.createNamedNode('http://example.org/object')
+      const graph = rdf.dataset([
+        rdf.quad(
+          rdf.namedNode('http://example.org/subject'),
+          rdf.namedNode('http://example.org/predicate'),
+          rdf.namedNode('http://example.org/object')
         )
       ])
 
-      return rdfBodyParser.attach(req, res).then(function () {
+      return rdfBodyParser.attach(req, res).then(() => {
         assert.equal(req.graph.equals(graph), true)
-        assert.equal(typeof res.sendGraph, 'function')
+        assert.equal(typeof res.graph, 'function')
       })
     })
   })

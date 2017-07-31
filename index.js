@@ -1,7 +1,9 @@
-var Promise = require('bluebird')
-var bodyParser = require('body-parser')
-var formats = require('rdf-formats-common')()
-var httpErrors = require('http-errors')
+const bodyParser = require('body-parser')
+const formats = require('rdf-formats-common')()
+const httpErrors = require('http-errors')
+const rdf = require('rdf-ext')
+const stringToStream = require('string-to-stream')
+const Promise = require('bluebird')
 
 function init (options) {
   options = options || {}
@@ -10,9 +12,8 @@ function init (options) {
   options.bodyParser = options.bodyParser || bodyParser.text({type: '*/*'})
   options.formats = options.formats || formats
 
-  // .sendGraph function
-  var sendGraph = function (graph, mediaType) {
-    var res = this
+  const sendGraph = function (graph, mediaType) {
+    const res = this
 
     mediaType = res.req.accepts(mediaType)
 
@@ -27,38 +28,46 @@ function init (options) {
       return Promise.reject(new httpErrors.NotAcceptable('no serializer found'))
     }
 
-    return options.formats.serializers.serialize(mediaType, graph).then(function (serialized) {
-      res.setHeader('Content-Type', mediaType)
+    res.setHeader('Content-Type', mediaType)
 
-      return Promise.promisify(res.end, {context: res})(serialized)
+    const resStream = options.formats.serializers.import(mediaType, graph)
+
+    resStream.pipe(res)
+
+    return new Promise((resolve, reject) => {
+      res.on('finish', resolve)
+      res.on('error', reject)
+      resStream.on('error', reject)
     })
   }
 
   // middleware
-  return function (req, res, next) {
-    options.bodyParser(req, res, function () {
-      res.sendGraph = sendGraph
+  return (req, res, next) => {
+    options.bodyParser(req, res, () => {
+      res.graph = sendGraph
 
-      var mediaType = 'content-type' in req.headers ? req.headers['content-type'] : options.defaultMediaType
+      const mediaType = 'content-type' in req.headers ? req.headers['content-type'] : options.defaultMediaType
 
       // empty body
       if (typeof req.body === 'object' && Object.keys(req.body).length === 0) {
         return next()
       }
 
-      options.formats.parsers.parse(mediaType, req.body).then(function (graph) {
+      const reqStream = options.formats.parsers.import(mediaType, stringToStream(req.body && req.body.toString()))
+
+      rdf.dataset().import(reqStream).then((graph) => {
         req.graph = graph
 
         next()
-      }).catch(function (error) {
-        next(error)
+      }).catch((err) => {
+        next(err)
       })
     })
   }
 }
 
 init.attach = function (req, res, options) {
-  if (req.graph && res.sendGraph) {
+  if (req.graph && res.graph) {
     return Promise.resolve()
   }
 
