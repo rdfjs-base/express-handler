@@ -30,7 +30,10 @@ function init (options) {
 
     res.setHeader('Content-Type', mediaType)
 
-    const resStream = options.formats.serializers.import(mediaType, graph)
+    // directly process stream or convert dataset to stream
+    const input = graph.readable ? graph : graph.toStream()
+
+    const resStream = options.formats.serializers.import(mediaType, input)
 
     resStream.pipe(res)
 

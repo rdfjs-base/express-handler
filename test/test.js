@@ -3,11 +3,12 @@
 const assert = require('assert')
 const express = require('express')
 const rdf = require('rdf-ext')
+const formats = require('rdf-formats-common')()
 const rdfBodyParser = require('../')
 const request = require('supertest')
 const Readable = require('stream').Readable
 
-const formats = {
+const dummyFormats = {
   parsers: {
     import: (mediaType, data) => {
       const stream = new Readable({
@@ -40,9 +41,18 @@ const formats = {
       stream.push(null)
 
       return stream
+    },
+    list: () => {
+      return ['text/plain']
     }
   }
 }
+
+const simpleGraph = rdf.dataset([
+  rdf.quad(rdf.namedNode('http://example.org/subject'), rdf.namedNode('http://example.org/predicate'), rdf.literal('object'))
+])
+
+const simpleGraphNt = simpleGraph.toString()
 
 describe('rdf-body-parser', () => {
   it('should return a middleware function', () => {
@@ -62,14 +72,16 @@ describe('rdf-body-parser', () => {
         bodyParser: (req, res, next) => {
           touched = true
 
+          req.body = simpleGraphNt
+
           next()
-        },
-        formats: formats
+        }
       }))
 
       return request(app)
         .post('/')
-        .send('test')
+        .set('content-type', 'application/n-triples')
+        .send(simpleGraphNt)
         .then((res) => {
           assert(touched)
         })
@@ -80,17 +92,18 @@ describe('rdf-body-parser', () => {
 
       let parsed = false
 
-      app.use(rdfBodyParser({formats: formats}))
+      app.use(rdfBodyParser())
 
       app.use((req, res, next) => {
-        parsed = req.body && req.body === 'test'
+        parsed = req.body && req.body === simpleGraphNt
 
         next()
       })
 
       return request(app)
         .post('/')
-        .send('test')
+        .set('content-type', 'application/n-triples')
+        .send(simpleGraphNt)
         .then((res) => {
           assert(parsed)
         })
@@ -111,32 +124,10 @@ describe('rdf-body-parser', () => {
 
       return request(app)
         .post('/')
-        .set('Content-Type', 'text/turtle')
+        .set('content-type', 'application/n-triples')
         .send('<http://example.org/subject> <http://example.org/predicate> <http://example.org/object> .')
         .then((res) => {
           assert(parsed)
-        })
-    })
-
-    it('should use the media type defined in Content-Type header to parse the data', () => {
-      const app = express()
-
-      let mediaType
-
-      app.use(rdfBodyParser({formats: formats}))
-
-      app.use((req, res, next) => {
-        mediaType = JSON.parse(req.graph._quads[0]).mediaType
-
-        next()
-      })
-
-      return request(app)
-        .post('/')
-        .set('Content-Type', 'text/plain')
-        .send('test')
-        .then((res) => {
-          assert.equal(mediaType, 'text/plain')
         })
     })
 
@@ -145,7 +136,7 @@ describe('rdf-body-parser', () => {
 
       let hasGraph = true
 
-      app.use(rdfBodyParser({formats: formats}))
+      app.use(rdfBodyParser())
 
       app.use((req, res, next) => {
         hasGraph = !!req.graph
@@ -163,21 +154,22 @@ describe('rdf-body-parser', () => {
     it('should parse graph and set assign it to .graph', () => {
       const app = express()
 
-      let graph
+      let parsed
 
-      app.use(rdfBodyParser({formats: formats}))
+      app.use(rdfBodyParser())
 
       app.use((req, res, next) => {
-        graph = JSON.parse(req.graph._quads[0])
+        parsed = simpleGraph.equals(req.graph)
 
         next()
       })
 
       return request(app)
         .post('/')
-        .send('test')
+        .set('content-type', 'application/n-triples')
+        .send(simpleGraphNt)
         .then((res) => {
-          assert.equal(graph.data._str, 'test')
+          assert(parsed)
         })
     })
 
@@ -223,19 +215,22 @@ describe('rdf-body-parser', () => {
 
       let searched = false
 
-      app.use(rdfBodyParser({formats: formats}))
+      const customFormats = Object.create(formats)
+
+      customFormats.serializers = Object.create(customFormats.serializers)
+      customFormats.serializers.list = () => {
+        searched = true
+
+        return []
+      }
+
+      app.use(rdfBodyParser({formats: customFormats}))
 
       app.use((req, res, next) => {
         res.graph('test').catch((err) => {}) // eslint-disable-line handle-callback-err
 
         next()
       })
-
-      formats.serializers.list = () => {
-        searched = true
-
-        return []
-      }
 
       return request(app)
         .get('/')
@@ -249,7 +244,14 @@ describe('rdf-body-parser', () => {
 
       let rejected = null
 
-      app.use(rdfBodyParser({formats: formats}))
+      const customFormats = Object.create(formats)
+
+      customFormats.serializers = Object.create(customFormats.serializers)
+      customFormats.serializers.list = () => {
+        return []
+      }
+
+      app.use(rdfBodyParser({formats: customFormats}))
 
       app.use((req, res, next) => {
         res.graph('test').catch((err) => {
@@ -258,10 +260,6 @@ describe('rdf-body-parser', () => {
 
         next()
       })
-
-      formats.serializers.list = () => {
-        return []
-      }
 
       return request(app)
         .get('/')
@@ -273,21 +271,17 @@ describe('rdf-body-parser', () => {
     it('should pick a media type if multiple are given', () => {
       const app = express()
 
-      app.use(rdfBodyParser({formats: formats}))
+      app.use(rdfBodyParser({formats: dummyFormats}))
 
       app.use((req, res, next) => {
-        res.graph('test', 'text/html text/plain')
+        res.graph(rdf.dataset(), 'text/html text/plain')
 
         next()
       })
 
-      formats.serializers.list = () => {
-        return ['text/plain']
-      }
-
       return request(app)
         .get('/')
-        .set('Accept', 'text/plain')
+        .set('accept', 'text/plain')
         .then((res) => {
           assert.equal(JSON.parse(res.text).mediaType, 'text/plain')
         })
@@ -296,21 +290,17 @@ describe('rdf-body-parser', () => {
     it('should pick a media type if multiple are given in an array', () => {
       const app = express()
 
-      app.use(rdfBodyParser({formats: formats}))
+      app.use(rdfBodyParser({formats: dummyFormats}))
 
       app.use((req, res, next) => {
-        res.graph('test', ['text/html', 'text/plain'])
+        res.graph(rdf.dataset(), ['text/html', 'text/plain'])
 
         next()
       })
 
-      formats.serializers.list = () => {
-        return ['text/plain']
-      }
-
       return request(app)
         .get('/')
-        .set('Accept', 'text/plain')
+        .set('accept', 'text/plain')
         .then((res) => {
           assert.equal(JSON.parse(res.text).mediaType, 'text/plain')
         })
@@ -319,30 +309,52 @@ describe('rdf-body-parser', () => {
     it('should send serialized graph with Content-Type header', () => {
       const app = express()
 
-      app.use(rdfBodyParser({formats: formats}))
+      app.use(rdfBodyParser())
 
       app.use((req, res, next) => {
-        res.graph('test')
+        res.graph(simpleGraph)
 
         next()
       })
 
-      formats.serializers.list = () => {
-        return ['text/plain']
-      }
-
       return request(app)
         .get('/')
-        .set('Accept', 'text/plain')
+        .set('accept', 'application/n-triples')
         .then((res) => {
-          const result = JSON.parse(res.text)
-
-          assert.equal(result.mediaType, 'text/plain')
-          assert.equal(result.data, 'test')
+          assert.equal(res.headers['content-type'], 'application/n-triples')
+          assert.equal(res.text, simpleGraphNt)
         })
     })
 
-    it('should reject on parser error', () => {
+    it('should send serialized quad stream with Content-Type header', () => {
+      const app = express()
+
+      const stream = new Readable({
+        objectMode: true,
+        read: () => {}
+      })
+
+      stream.push(simpleGraph.toArray().shift())
+      stream.push(null)
+
+      app.use(rdfBodyParser())
+
+      app.use((req, res, next) => {
+        res.graph(stream)
+
+        next()
+      })
+
+      return request(app)
+        .get('/')
+        .set('accept', 'application/n-triples')
+        .then((res) => {
+          assert.equal(res.headers['content-type'], 'application/n-triples')
+          assert.equal(res.text, simpleGraphNt)
+        })
+    })
+
+    it('should reject on serializer error', () => {
       const app = express()
 
       let rejected = false
@@ -367,7 +379,7 @@ describe('rdf-body-parser', () => {
       }))
 
       app.use((req, res, next) => {
-        res.graph('test').catch(() => {
+        res.graph(rdf.dataset()).catch(() => {
           rejected = true
         })
 
@@ -376,7 +388,7 @@ describe('rdf-body-parser', () => {
 
       return request(app)
         .get('/')
-        .set('Accept', 'text/plain')
+        .set('accept', 'text/plain')
         .then((res) => {
           assert(rejected)
         })
@@ -398,7 +410,7 @@ describe('rdf-body-parser', () => {
 
     it('should parse the body and attach the .graph method', () => {
       const req = {
-        body: '<http://example.org/subject> <http://example.org/predicate> <http://example.org/object> .\n',
+        body: simpleGraphNt,
         headers: {
           'content-type': 'application/n-triples'
         }
@@ -406,16 +418,8 @@ describe('rdf-body-parser', () => {
 
       const res = {}
 
-      const graph = rdf.dataset([
-        rdf.quad(
-          rdf.namedNode('http://example.org/subject'),
-          rdf.namedNode('http://example.org/predicate'),
-          rdf.namedNode('http://example.org/object')
-        )
-      ])
-
       return rdfBodyParser.attach(req, res).then(() => {
-        assert.equal(req.graph.equals(graph), true)
+        assert.equal(req.graph.equals(simpleGraph), true)
         assert.equal(typeof res.graph, 'function')
       })
     })
