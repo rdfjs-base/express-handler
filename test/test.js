@@ -321,7 +321,7 @@ describe('rdf-body-parser', () => {
         .get('/')
         .set('accept', 'application/n-triples')
         .then((res) => {
-          assert.equal(res.headers['content-type'], 'application/n-triples')
+          assert.equal(res.headers['content-type'], 'application/n-triples; charset=utf-8')
           assert.equal(res.text, simpleGraphNt)
         })
     })
@@ -349,7 +349,7 @@ describe('rdf-body-parser', () => {
         .get('/')
         .set('accept', 'application/n-triples')
         .then((res) => {
-          assert.equal(res.headers['content-type'], 'application/n-triples')
+          assert.equal(res.headers['content-type'], 'application/n-triples; charset=utf-8')
           assert.equal(res.text, simpleGraphNt)
         })
     })

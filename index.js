@@ -28,7 +28,7 @@ function init (options) {
       return Promise.reject(new httpErrors.NotAcceptable('no serializer found'))
     }
 
-    res.setHeader('Content-Type', mediaType)
+    res.setHeader('Content-Type', mediaType + '; charset=utf-8')
 
     // directly process stream or convert dataset to stream
     const input = graph.readable ? graph : graph.toStream()
