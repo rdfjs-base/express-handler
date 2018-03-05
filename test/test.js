@@ -207,6 +207,28 @@ describe('rdf-body-parser', () => {
           assert(errorThrown)
         })
     })
+
+    it('should passthrough if content cannot be parsed to a stream', () => {
+      const app = express()
+
+      let bodyTreatedAsText
+
+      app.use(rdfBodyParser())
+
+      app.use((req, res, next) => {
+        bodyTreatedAsText = req.body && req.body === simpleGraphNt
+
+        next()
+      })
+
+      return request(app)
+        .post('/')
+        .set('content-type', 'text/plain')
+        .send(simpleGraphNt)
+        .then((res) => {
+          assert(bodyTreatedAsText)
+        })
+    })
   })
 
   describe('response.graph', () => {

@@ -57,6 +57,10 @@ function init (options) {
       }
 
       const reqStream = options.formats.parsers.import(mediaType, stringToStream(req.body && req.body.toString()))
+      // If no stream (possibly due to an unsupported content-type), then don't attempt to process any further.
+      if (!reqStream) {
+        return next()
+      }
 
       rdf.dataset().import(reqStream).then((graph) => {
         req.graph = graph
