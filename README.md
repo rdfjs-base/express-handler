@@ -1,45 +1,85 @@
-# rdf-body-parser
+# express-rdf-handler
 
-[![Build Status](https://travis-ci.org/rdf-ext/rdf-body-parser.svg?branch=master)](https://travis-ci.org/rdf-ext/rdf-body-parser)
-[![npm version](https://badge.fury.io/js/rdf-body-parser.svg)](https://badge.fury.io/js/rdf-body-parser)
+[![Build Status](https://travis-ci.org/rdf-ext/express-rdf-handler.svg?branch=master)](https://travis-ci.org/rdf-ext/express-rdf-handler)
+[![npm version](https://badge.fury.io/js/express-rdf-handler.svg)](https://badge.fury.io/js/express-rdf-handler)
 
-The `rdf-body-parser` middleware parses incoming RDF data, parses it and attaches it with the property `.graph` to the request object.
-It also attaches the `.graph` function to the response to send a graph in the requested format.
+The `express-rdf-handler` middleware provides methods to parse incoming RDF data from request with content like `POST` or `PUT` requests.
+It also provides methods to serialize outgoing RDF data.   
 
 ## Usage
 
-Import the module:
+The package returns a factory function to create express middlewares.
 
-    const rdfBodyParser = require('rdf-body-parser')
+### Factory
 
-The `rdf-body-parser` module returns a function to create a middleware. So let's call that function:
+Adding it to all routes of the app would look like this:
 
-    app.use(rdfBodyParser())
+```
+const express = require('express')
+const rdfHandler = require('express-rdf-handler')
 
-Now you can use the `.graph` property and `.graph` function:
+const app = express()
 
-    app.use((req, res, next) => {
-       // .graph contains the parsed graph
-       if (req.graph) {
-         console.log(req.graph.toString())
-       }
+app.use(rdfHandler())
+```
 
-       // .graph sends a graph to the client
-       res.graph(rdf.dataset())
-    })
+The factory accepts the following options:
+
+- `factory`: The factory used to create Dataset instances. Default: `require('rdf-ext')`
+- `formats`: An object with `parsers` and `serializers`, each given as `@rdfjs/sink-map`. Default: `require('@rdfjs/formats-common')`
+- `defaultMediaType`: If an unknown Content-Type is given, this media type will be used. Default: `undefined`
+
+### Request
+
+Routes following the RDF Handler can access the parsed Quads from the request as a Stream or Dataset.
+The `req.dataset()` and `req.quadStream()` methods can be used for this.
+But the methods are only attached if the request contains content in a type supported by one of the parsers.
+The logic to access the Quads could look like this:
+
+```
+app.use((req, res) => {
+  if (!req.dataset) {
+    return res.status(406).end() // send 406 not acceptable if the content can't be parsed
+  }
+
+  const dataset = await req.dataset()
+})
+```
+
+`req.dataset()` requires `await` as it's an async method.
+`req.quadStream()` is a sync method.
+Both methods accept an options object, which is forwarded to the parser.
+
+### Response
+
+The RDF Handler middleware always attaches the `res.dataset()` and `res.quadStream()` methods.
+The methods must be called with the Dataset or Stream, which should be sent.
+A second options object can be given, which will be forwarded to the serializer.
+Sending a Dataset would look like this:
+
+```
+app.use((req, res) => {
+  await res.dataset(dataset)
+})
+```
+
+Both methods are async and finished once the response was sent.
 
 ### Attaching
 
-If you don't know if `rdf-body-parser` is used as middleware, it's possible to attach it dynamically.
-That is useful inside of a middleware where you want to use an application specific instance (with application options) or the default one.
-`.attach` has no callback parameter, instead it returns a `Promise`.
+If you don't know if `express-rdf-handler` is used earlier in the application, it's possible to attach it dynamically.
+That is useful inside of a middleware where you want to use an application RDF Handler instance and it's options, but fallback to a local instance if there is no RDF Handler earlier in the routes.
+The `.attach()` function can be used.
+`await` must be used, as it's an async function. 
 
-    app.use((req, res, next) => {
-      rdfBodyParser.attach(req, res).then(() => {
-        if (req.graph) {
-          console.log(req.graph.toString())
-        }
+```
+app.use((req, res) => {
+  await rdfHandler.attach(req, res)
 
-        res.graph(rdf.dataset())
-      })
-    })
+  if (req.dataset) {
+    const dataset = await req.dataset()
+  }
+
+  await res.dataset(rdf.dataset())
+})
+```

@@ -1,84 +1,93 @@
-const bodyParser = require('body-parser')
-const formats = require('rdf-formats-common')()
+const defaultFormats = require('@rdfjs/formats-common')
 const httpErrors = require('http-errors')
 const rdf = require('rdf-ext')
-const stringToStream = require('string-to-stream')
-const Promise = require('bluebird')
+const { promisify } = require('util')
 
-function init (options) {
-  options = options || {}
+async function readDataset ({ factory, options, req }) {
+  return factory.dataset().import(req.quadStream(options))
+}
 
-  // default options
-  options.bodyParser = options.bodyParser || bodyParser.text({type: '*/*'})
-  options.formats = options.formats || formats
+function readQuadStream ({ formats, mediaType, options, req }) {
+  return formats.parsers.import(mediaType, req, options)
+}
 
-  const sendGraph = function (graph, mediaType) {
-    const res = this
+async function sendDataset ({ dataset, options, res }) {
+  await res.quadStream(dataset.toStream(), options)
+}
 
-    mediaType = res.req.accepts(mediaType)
+async function sendQuadStream ({ defaultMediaType, formats, options, quadStream, req, res }) {
+  // check accept header against list of serializers
+  const accepts = req.accepts([...formats.serializers.keys()])
 
-    // express returns ['*/*'] if no match was found
-    if (Array.isArray(mediaType)) {
-      mediaType = undefined
-    }
+  // content type header was already set?
+  const contentType = res.get('content-type') && res.get('content-type').split(';')[0]
 
-    mediaType = mediaType || res.req.accepts(options.formats.serializers.list()) || options.defaultMediaType
+  // content type header can be used to force the media type, accept header is used otherwise and default as fallback
+  const mediaType = contentType || accepts || defaultMediaType
 
-    if (!mediaType || typeof mediaType !== 'string') {
-      return Promise.reject(new httpErrors.NotAcceptable('no serializer found'))
-    }
+  const serializer = formats.serializers.get(mediaType)
 
-    res.setHeader('Content-Type', mediaType + '; charset=utf-8')
-
-    // directly process stream or convert dataset to stream
-    const input = graph.readable ? graph : graph.toStream()
-
-    const resStream = options.formats.serializers.import(mediaType, input)
-
-    resStream.pipe(res)
-
-    return new Promise((resolve, reject) => {
-      res.on('finish', resolve)
-      res.on('error', reject)
-      resStream.on('error', reject)
-    })
+  // if no matching serializer can be found -> 406 not acceptable
+  if (!serializer) {
+    throw new httpErrors.NotAcceptable('no matching serializer found')
   }
 
+  res.set('content-type', mediaType + '; charset=utf-8')
+
+  const serializedStream = formats.serializers.import(mediaType, quadStream, options)
+
+  serializedStream.pipe(res)
+
+  await new Promise((resolve, reject) => {
+    res.on('finish', resolve)
+    res.on('error', reject)
+    serializedStream.on('error', reject)
+  })
+}
+
+function init ({ factory = rdf, formats = defaultFormats, defaultMediaType } = {}) {
   // middleware
   return (req, res, next) => {
-    options.bodyParser(req, res, () => {
-      res.graph = sendGraph
+    res.dataset = async (dataset, options) => {
+      await sendDataset({ dataset, options, res })
+    }
 
-      const mediaType = 'content-type' in req.headers ? req.headers['content-type'] : options.defaultMediaType
+    res.quadStream = async (quadStream, options) => {
+      await sendQuadStream({ formats, options, quadStream, req, res })
+    }
 
-      // empty body
-      if (typeof req.body === 'object' && Object.keys(req.body).length === 0) {
-        return next()
-      }
+    const contentType = req.get('content-type')
 
-      const reqStream = options.formats.parsers.import(mediaType, stringToStream(req.body && req.body.toString()))
-      // If no stream (possibly due to an unsupported content-type), then don't attempt to process any further.
-      if (!reqStream) {
-        return next()
-      }
+    // only process body if content type header was set
+    if (!contentType) {
+      return next()
+    }
 
-      rdf.dataset().import(reqStream).then((graph) => {
-        req.graph = graph
+    const mediaType = contentType || defaultMediaType
 
-        next()
-      }).catch((err) => {
-        next(err)
-      })
-    })
+    // don't attach methods at all if there is no matching parser for the media type
+    if (!formats.parsers.has(mediaType)) {
+      return next()
+    }
+
+    req.dataset = async options => {
+      return readDataset({ factory, options, req })
+    }
+
+    req.quadStream = options => {
+      return readQuadStream({ formats, mediaType, options, req })
+    }
+
+    next()
   }
 }
 
-init.attach = function (req, res, options) {
-  if (req.graph && res.graph) {
-    return Promise.resolve()
+init.attach = async (req, res, options) => {
+  if (req.dataset || req.quadStream || res.dataset || res.quadStream) {
+    return
   }
 
-  return Promise.promisify(init(options))(req, res)
+  return promisify(init(options))(req, res)
 }
 
 module.exports = init
