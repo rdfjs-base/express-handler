@@ -1,9 +1,9 @@
-# express-rdf-handler
+# @rdfjs/express-handler
 
-[![Build Status](https://travis-ci.org/rdf-ext/express-rdf-handler.svg?branch=master)](https://travis-ci.org/rdf-ext/express-rdf-handler)
-[![npm version](https://badge.fury.io/js/express-rdf-handler.svg)](https://badge.fury.io/js/express-rdf-handler)
+[![Build Status](https://travis-ci.org/rdf-js/express-handler.svg?branch=master)](https://travis-ci.org/rdfjs/express-handler)
+[![npm version](https://img.shields.io/npm/v/@rdfjs/express-handler.svg)](https://www.npmjs.com/package/@rdfjs/express-handler)
 
-The `express-rdf-handler` middleware provides methods to parse incoming RDF data from request with content like `POST` or `PUT` requests.
+The `@rdfjs/express-handler` middleware provides methods to parse incoming RDF data from request with content like `POST` or `PUT` requests.
 It also provides methods to serialize outgoing RDF data.   
 
 ## Usage
@@ -16,7 +16,7 @@ Adding it to all routes of the app would look like this:
 
 ```
 const express = require('express')
-const rdfHandler = require('express-rdf-handler')
+const rdfHandler = require('@rdfjs/express-handler')
 
 const app = express()
 
@@ -67,7 +67,7 @@ Both methods are async and finished once the response was sent.
 
 ### Attaching
 
-If you don't know if `express-rdf-handler` is used earlier in the application, it's possible to attach it dynamically.
+If you don't know if `@rdfjs/express-handler` is used earlier in the application, it's possible to attach it dynamically.
 That is useful inside of a middleware where you want to use an application RDF Handler instance and it's options, but fallback to a local instance if there is no RDF Handler earlier in the routes.
 The `.attach()` function can be used.
 `await` must be used, as it's an async function. 
