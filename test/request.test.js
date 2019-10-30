@@ -5,7 +5,8 @@ const example = require('./support/example')
 const express = require('express')
 const formatsMock = require('./support/formatsMock')
 const isStream = require('isstream')
-const rdf = require('rdf-ext')
+const rdf = require('@rdfjs/dataset')
+const { fromStream, toCanonical } = require('rdf-dataset-ext')
 const rdfHandler = require('../')
 const request = require('supertest')
 
@@ -78,7 +79,7 @@ describe('request', () => {
         .set('content-type', 'application/n-triples')
         .send(example.nt)
 
-      assert.strictEqual(dataset.toCanonical(), example.dataset.toCanonical())
+      assert.strictEqual(toCanonical(dataset), example.nt)
     })
 
     it('should handle parser errors', async () => {
@@ -204,9 +205,9 @@ describe('request', () => {
 
       assert(isStream(quadStream))
 
-      const dataset = await (rdf.dataset().import(quadStream))
+      const dataset = await fromStream(rdf.dataset(), quadStream)
 
-      assert.strictEqual(dataset.toCanonical(), example.dataset.toCanonical())
+      assert.strictEqual(toCanonical(dataset), example.nt)
     })
 
     it('should forward options to the parser', async () => {

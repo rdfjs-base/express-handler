@@ -1,4 +1,5 @@
-const rdf = require('rdf-ext')
+const rdf = require('@rdfjs/dataset')
+const { toCanonical } = require('rdf-dataset-ext')
 
 const dataset = rdf.dataset([
   rdf.quad(
@@ -7,7 +8,7 @@ const dataset = rdf.dataset([
     rdf.literal('object'))
 ])
 
-const nt = dataset.toString()
+const nt = toCanonical(dataset)
 
 module.exports = {
   dataset,

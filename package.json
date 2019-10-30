@@ -24,15 +24,17 @@
   },
   "homepage": "https://github.com/rdfjs-base/express-handler",
   "dependencies": {
+    "@rdfjs/dataset": "^1.0.1",
     "@rdfjs/formats-common": "^2.0.0",
     "http-errors": "^1.7.2",
     "isstream": "^0.1.2",
-    "rdf-ext": "^1.2.2"
+    "rdf-dataset-ext": "^1.0.0"
   },
   "devDependencies": {
     "@rdfjs/sink-map": "^1.0.0",
     "express": "^4.16.4",
     "mocha": "^6.0.2",
+    "standard": "^14.3.1",
     "supertest": "^4.0.2"
   }
 }
