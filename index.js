@@ -1,10 +1,11 @@
 const defaultFormats = require('@rdfjs/formats-common')
 const httpErrors = require('http-errors')
-const rdf = require('rdf-ext')
+const rdf = require('@rdfjs/dataset')
+const { fromStream, toStream } = require('rdf-dataset-ext')
 const { promisify } = require('util')
 
 async function readDataset ({ factory, options, req }) {
-  return factory.dataset().import(req.quadStream(options))
+  return fromStream(factory.dataset(), req.quadStream(options))
 }
 
 function readQuadStream ({ formats, mediaType, options, req }) {
@@ -12,7 +13,7 @@ function readQuadStream ({ formats, mediaType, options, req }) {
 }
 
 async function sendDataset ({ dataset, options, res }) {
-  await res.quadStream(dataset.toStream(), options)
+  await res.quadStream(toStream(dataset), options)
 }
 
 async function sendQuadStream ({ defaultMediaType, formats, options, quadStream, req, res }) {

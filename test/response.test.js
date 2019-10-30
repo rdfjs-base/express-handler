@@ -4,7 +4,8 @@ const assert = require('assert')
 const example = require('./support/example')
 const express = require('express')
 const formatsMock = require('./support/formatsMock')
-const rdf = require('rdf-ext')
+const rdf = require('@rdfjs/dataset')
+const { toStream } = require('rdf-dataset-ext')
 const rdfHandler = require('../')
 const request = require('supertest')
 const SinkMap = require('@rdfjs/sink-map')
@@ -180,7 +181,7 @@ describe('response', () => {
       app.use(rdfHandler({ formats: customFormats }))
       app.use(async (req, res, next) => {
         try {
-          await res.quadStream(rdf.dataset().toStream())
+          await res.quadStream(toStream(rdf.dataset()))
         } catch (err) {}
 
         next()
@@ -225,7 +226,7 @@ describe('response', () => {
 
       app.use(rdfHandler({ formats: customFormats }))
       app.use(async (req, res) => {
-        await res.quadStream(rdf.dataset().toStream())
+        await res.quadStream(toStream(rdf.dataset()))
       })
 
       const res = await request(app).get('/')
@@ -239,7 +240,7 @@ describe('response', () => {
 
       app.use(rdfHandler())
       app.use(async (req, res) => {
-        await res.quadStream(example.dataset.toStream())
+        await res.quadStream(toStream(example.dataset))
       })
 
       const res = await request(app).get('/')
@@ -253,7 +254,7 @@ describe('response', () => {
 
       app.use(rdfHandler())
       app.use(async (req, res) => {
-        await res.quadStream(example.dataset.toStream())
+        await res.quadStream(toStream(example.dataset))
       })
 
       const res = await request(app).get('/')
@@ -300,7 +301,7 @@ describe('response', () => {
 
       app.use(rdfHandler({ formats: customFormats }))
       app.use(async (req, res, next) => {
-        await res.quadStream(rdf.dataset().toStream(), options)
+        await res.quadStream(toStream(rdf.dataset()), options)
 
         next()
       })
