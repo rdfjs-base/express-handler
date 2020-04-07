@@ -4,6 +4,7 @@ const rdf = require('@rdfjs/dataset')
 const { fromStream, toStream } = require('rdf-dataset-ext')
 const { promisify } = require('util')
 const { PassThrough } = require('readable-stream')
+const absoluteUrl = require('absolute-url')
 
 async function readDataset ({ factory, options, req }) {
   return fromStream(factory.dataset(), req.quadStream(options))
@@ -50,7 +51,11 @@ async function sendQuadStream ({ defaultMediaType, formats, options, quadStream,
 function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, baseIriFromRequest } = {}) {
   let getBaseIri
   if (baseIriFromRequest === true) {
-    getBaseIri = (req) => req.absoluteUrl()
+    getBaseIri = (req) => {
+      absoluteUrl.attach(req)
+
+      return req.absoluteUrl()
+    }
   } else if (typeof baseIriFromRequest === 'function') {
     getBaseIri = baseIriFromRequest
   }

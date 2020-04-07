@@ -6,7 +6,6 @@ const express = require('express')
 const formatsMock = require('./support/formatsMock')
 const isStream = require('isstream')
 const rdf = require('@rdfjs/dataset')
-const absoluteUrl = require('absolute-url')
 const { fromStream, toCanonical } = require('rdf-dataset-ext')
 const rdfHandler = require('../')
 const request = require('supertest')
@@ -148,7 +147,6 @@ describe('request', () => {
         }
       })
 
-      app.use(absoluteUrl())
       app.use(rdfHandler({ formats, baseIriFromRequest: true }))
       app.use(async (req, res, next) => {
         await req.dataset()
@@ -305,7 +303,6 @@ describe('request', () => {
         }
       })
 
-      app.use(absoluteUrl())
       app.use(rdfHandler({ formats, baseIriFromRequest: true }))
       app.use(async (req, res, next) => {
         await req.quadStream()
