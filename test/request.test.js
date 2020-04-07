@@ -6,6 +6,7 @@ const express = require('express')
 const formatsMock = require('./support/formatsMock')
 const isStream = require('isstream')
 const rdf = require('@rdfjs/dataset')
+const absoluteUrl = require('absolute-url')
 const { fromStream, toCanonical } = require('rdf-dataset-ext')
 const rdfHandler = require('../')
 const request = require('supertest')
@@ -131,7 +132,63 @@ describe('request', () => {
         .set('content-type', 'text/plain')
         .send('')
 
-      assert.strictEqual(givenOptions, options)
+      assert.deepStrictEqual(givenOptions, options)
+    })
+
+    it('should pass base IRI to parser when set on handler', async () => {
+      let givenOptions = null
+      const options = {
+        baseIRI: 'http://example.com/resource/name'
+      }
+      const app = express()
+
+      const formats = formatsMock({
+        parse: (stream, options) => {
+          givenOptions = options
+        }
+      })
+
+      app.use(absoluteUrl())
+      app.use(rdfHandler({ formats, baseIRI: true }))
+      app.use(async (req, res, next) => {
+        await req.dataset()
+
+        next()
+      })
+
+      await request(app).post('/resource/name')
+        .set('content-type', 'text/plain')
+        .set('host', 'example.com')
+        .send('')
+
+      assert.deepStrictEqual(givenOptions, options)
+    })
+
+    it('should pass computed base IRI to parser when set on handler', async () => {
+      let givenOptions = null
+      const options = {
+        baseIRI: 'http://example.com/resource-base/'
+      }
+      const app = express()
+
+      const formats = formatsMock({
+        parse: (stream, options) => {
+          givenOptions = options
+        }
+      })
+
+      app.use(rdfHandler({ formats, baseIRI: () => 'http://example.com/resource-base/' }))
+      app.use(async (req, res, next) => {
+        await req.dataset()
+
+        next()
+      })
+
+      await request(app).post('/resource/name')
+        .set('content-type', 'text/plain')
+        .send('')
+
+      assert.deepStrictEqual(givenOptions, options)
     })
   })
 
@@ -232,7 +289,63 @@ describe('request', () => {
         .set('content-type', 'text/plain')
         .send('')
 
-      assert.strictEqual(givenOptions, options)
+      assert.deepStrictEqual(givenOptions, options)
+    })
+
+    it('should pass base IRI to parser when set on handler', async () => {
+      let givenOptions = null
+      const options = {
+        baseIRI: 'http://example.com/resource/name'
+      }
+      const app = express()
+
+      const formats = formatsMock({
+        parse: (stream, options) => {
+          givenOptions = options
+        }
+      })
+
+      app.use(absoluteUrl())
+      app.use(rdfHandler({ formats, baseIRI: true }))
+      app.use(async (req, res, next) => {
+        await req.quadStream()
+
+        next()
+      })
+
+      await request(app).post('/resource/name')
+        .set('content-type', 'text/plain')
+        .set('host', 'example.com')
+        .send('')
+
+      assert.deepStrictEqual(givenOptions, options)
+    })
+
+    it('should pass computed base IRI to parser when set on handler', async () => {
+      let givenOptions = null
+      const options = {
+        baseIRI: 'http://example.com/resource-base/'
+      }
+      const app = express()
+
+      const formats = formatsMock({
+        parse: (stream, options) => {
+          givenOptions = options
+        }
+      })
+
+      app.use(rdfHandler({ formats, baseIRI: () => 'http://example.com/resource-base/' }))
+      app.use(async (req, res, next) => {
+        await req.quadStream()
+
+        next()
+      })
+
+      await request(app).post('/resource/name')
+        .set('content-type', 'text/plain')
+        .send('')
+
+      assert.deepStrictEqual(givenOptions, options)
     })
   })
 })

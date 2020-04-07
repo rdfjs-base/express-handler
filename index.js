@@ -3,6 +3,7 @@ const httpErrors = require('http-errors')
 const rdf = require('@rdfjs/dataset')
 const { fromStream, toStream } = require('rdf-dataset-ext')
 const { promisify } = require('util')
+const { PassThrough } = require('readable-stream')
 
 async function readDataset ({ factory, options, req }) {
   return fromStream(factory.dataset(), req.quadStream(options))
@@ -46,7 +47,14 @@ async function sendQuadStream ({ defaultMediaType, formats, options, quadStream,
   })
 }
 
-function init ({ factory = rdf, formats = defaultFormats, defaultMediaType } = {}) {
+function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, baseIRI } = {}) {
+  let getBaseIri
+  if (baseIRI === true) {
+    getBaseIri = (req) => req.absoluteUrl()
+  } else if (typeof baseIRI === 'function') {
+    getBaseIri = baseIRI
+  }
+
   // middleware
   return (req, res, next) => {
     res.dataset = async (dataset, options) => {
@@ -71,11 +79,29 @@ function init ({ factory = rdf, formats = defaultFormats, defaultMediaType } = {
       return next()
     }
 
-    req.dataset = async options => {
+    req.dataset = async userOptions => {
+      const options = { ...userOptions }
+      if (getBaseIri) {
+        options.baseIRI = await getBaseIri(req)
+      }
+
       return readDataset({ factory, options, req })
     }
 
-    req.quadStream = options => {
+    req.quadStream = userOptions => {
+      const options = { ...userOptions }
+
+      if (getBaseIri) {
+        const passThrough = new PassThrough()
+        Promise.resolve().then(async () => {
+          options.baseIRI = getBaseIri(req)
+
+          readQuadStream({ formats, mediaType, options, req }).pipe(passThrough)
+        })
+
+        return passThrough
+      }
+
       return readQuadStream({ formats, mediaType, options, req })
     }
 

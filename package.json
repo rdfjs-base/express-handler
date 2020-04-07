@@ -26,9 +26,11 @@
   "dependencies": {
     "@rdfjs/dataset": "^1.0.1",
     "@rdfjs/formats-common": "^2.0.0",
+    "absolute-url": "^1.2.2",
     "http-errors": "^1.7.2",
     "isstream": "^0.1.2",
-    "rdf-dataset-ext": "^1.0.0"
+    "rdf-dataset-ext": "^1.0.0",
+    "readable-stream": "^3.6.0"
   },
   "devDependencies": {
     "@rdfjs/sink-map": "^1.0.0",
