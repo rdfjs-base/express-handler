@@ -47,12 +47,12 @@ async function sendQuadStream ({ defaultMediaType, formats, options, quadStream,
   })
 }
 
-function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, baseIRI } = {}) {
+function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, baseIriFromRequest } = {}) {
   let getBaseIri
-  if (baseIRI === true) {
+  if (baseIriFromRequest === true) {
     getBaseIri = (req) => req.absoluteUrl()
-  } else if (typeof baseIRI === 'function') {
-    getBaseIri = baseIRI
+  } else if (typeof baseIriFromRequest === 'function') {
+    getBaseIri = baseIriFromRequest
   }
 
   // middleware

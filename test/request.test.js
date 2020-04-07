@@ -149,7 +149,7 @@ describe('request', () => {
       })
 
       app.use(absoluteUrl())
-      app.use(rdfHandler({ formats, baseIRI: true }))
+      app.use(rdfHandler({ formats, baseIriFromRequest: true }))
       app.use(async (req, res, next) => {
         await req.dataset()
 
@@ -177,7 +177,7 @@ describe('request', () => {
         }
       })
 
-      app.use(rdfHandler({ formats, baseIRI: () => 'http://example.com/resource-base/' }))
+      app.use(rdfHandler({ formats, baseIriFromRequest: () => 'http://example.com/resource-base/' }))
       app.use(async (req, res, next) => {
         await req.dataset()
 
@@ -306,7 +306,7 @@ describe('request', () => {
       })
 
       app.use(absoluteUrl())
-      app.use(rdfHandler({ formats, baseIRI: true }))
+      app.use(rdfHandler({ formats, baseIriFromRequest: true }))
       app.use(async (req, res, next) => {
         await req.quadStream()
 
@@ -334,7 +334,7 @@ describe('request', () => {
         }
       })
 
-      app.use(rdfHandler({ formats, baseIRI: () => 'http://example.com/resource-base/' }))
+      app.use(rdfHandler({ formats, baseIriFromRequest: () => 'http://example.com/resource-base/' }))
       app.use(async (req, res, next) => {
         await req.quadStream()
 
