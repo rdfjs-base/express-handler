@@ -28,7 +28,7 @@ The factory accepts the following options:
 - `factory`: The factory used to create Dataset instances. Default: `require('rdf-ext')`
 - `formats`: An object with `parsers` and `serializers`, each given as `@rdfjs/sink-map`. Default: `require('@rdfjs/formats-common')`
 - `defaultMediaType`: If an unknown Content-Type is given, this media type will be used. Default: `undefined`
-- `baseIRI`: If `true`, will call [absolute-url](https://npm.im/absolute-url) to get the requested IRI and pass as base IRI to the parser. It can also be a function `async (req) => string` which can be used to compute the base IRI for the parser.
+- `baseIriFromRequest`: If `true`, will call [absolute-url](https://npm.im/absolute-url) to get the requested IRI and pass as base IRI to the parser. It can also be a function `async (req) => string` which can be used to compute the base IRI for the parser.
 
 ### Request
 
