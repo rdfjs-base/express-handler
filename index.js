@@ -2,6 +2,7 @@ const defaultFormats = require('@rdfjs/formats-common')
 const httpErrors = require('http-errors')
 const rdf = require('@rdfjs/dataset')
 const { fromStream, toStream } = require('rdf-dataset-ext')
+const TripleToQuad = require('rdf-transform-triple-to-quad')
 const { promisify } = require('util')
 const { PassThrough } = require('readable-stream')
 const absoluteUrl = require('absolute-url')
@@ -18,7 +19,7 @@ async function sendDataset ({ dataset, options, res }) {
   await res.quadStream(toStream(dataset), options)
 }
 
-async function sendQuadStream ({ defaultMediaType, formats, options, quadStream, req, res }) {
+async function sendQuadStream ({ defaultMediaType, formats, options, quadStream, req, res, toTriple }) {
   // check accept header against list of serializers
   const accepts = req.accepts([...formats.serializers.keys()])
 
@@ -37,6 +38,10 @@ async function sendQuadStream ({ defaultMediaType, formats, options, quadStream,
 
   res.set('content-type', mediaType + '; charset=utf-8')
 
+  if (toTriple) {
+    quadStream = quadStream.pipe(new TripleToQuad())
+  }
+
   const serializedStream = formats.serializers.import(mediaType, quadStream, options)
 
   serializedStream.pipe(res)
@@ -48,8 +53,9 @@ async function sendQuadStream ({ defaultMediaType, formats, options, quadStream,
   })
 }
 
-function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, baseIriFromRequest } = {}) {
+function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, baseIriFromRequest, toTriple } = {}) {
   let getBaseIri
+
   if (baseIriFromRequest === true) {
     getBaseIri = (req) => {
       absoluteUrl.attach(req)
@@ -67,7 +73,14 @@ function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, base
     }
 
     res.quadStream = async (quadStream, options) => {
-      await sendQuadStream({ formats, options, quadStream, req, res })
+      await sendQuadStream({
+        formats,
+        options,
+        quadStream,
+        req,
+        res,
+        toTriple
+      })
     }
 
     const contentType = req.get('content-type')

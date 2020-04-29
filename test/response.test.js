@@ -2,6 +2,7 @@
 
 const assert = require('assert')
 const example = require('./support/example')
+const exampleQuad = require('./support/exampleQuad')
 const express = require('express')
 const formatsMock = require('./support/formatsMock')
 const rdf = require('@rdfjs/dataset')
@@ -249,7 +250,7 @@ describe('response', () => {
       assert.strictEqual(res.headers['content-type'], 'application/n-triples; charset=utf-8')
     })
 
-    it('should send serialized content', async () => {
+    it('should send serialized triple content', async () => {
       const app = express()
 
       app.use(rdfHandler())
@@ -259,6 +260,34 @@ describe('response', () => {
 
       const res = await request(app).get('/')
         .set('accept', 'application/n-triples')
+
+      assert.strictEqual(res.text, example.nt)
+    })
+
+    it('should send serialized quad content', async () => {
+      const app = express()
+
+      app.use(rdfHandler())
+      app.use(async (req, res) => {
+        await res.quadStream(toStream(exampleQuad.dataset))
+      })
+
+      const res = await request(app).get('/')
+        .set('accept', 'application/n-quads')
+
+      assert.strictEqual(res.text, exampleQuad.nq)
+    })
+
+    it('should send serialized triple content if quads are given and toTriple is true', async () => {
+      const app = express()
+
+      app.use(rdfHandler({ toTriple: true }))
+      app.use(async (req, res) => {
+        await res.quadStream(toStream(exampleQuad.dataset))
+      })
+
+      const res = await request(app).get('/')
+        .set('accept', 'application/n-quads, application/n-triples')
 
       assert.strictEqual(res.text, example.nt)
     })
