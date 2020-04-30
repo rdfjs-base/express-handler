@@ -30,6 +30,7 @@
     "http-errors": "^1.7.2",
     "isstream": "^0.1.2",
     "rdf-dataset-ext": "^1.0.0",
+    "rdf-transform-triple-to-quad": "^1.0.2",
     "readable-stream": "^3.6.0"
   },
   "devDependencies": {
