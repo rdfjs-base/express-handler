@@ -30,7 +30,7 @@ The factory accepts the following options:
 - `defaultMediaType`: If an unknown Content-Type is given, this media type will be used. Default: `undefined`
 - `baseIriFromRequest`: If `true`, will call [absolute-url](https://npm.im/absolute-url) to get the requested IRI and pass as base IRI to the parser.
   It can also be a function `async (req) => string` which can be used to compute the base IRI for the parser.
-- `toTriple`: If `true`, the RDF/JS Quads sent using `res.dataset()` or `res.quadStream()` are converted to triples. Default `undefined`.
+- `sendTriples`: If `true`, the RDF/JS Quads sent using `res.dataset()` or `res.quadStream()` are converted to triples (default graph). Default `undefined`.
 
 ### Request
 

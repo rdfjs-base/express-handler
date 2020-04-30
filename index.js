@@ -19,7 +19,7 @@ async function sendDataset ({ dataset, options, res }) {
   await res.quadStream(toStream(dataset), options)
 }
 
-async function sendQuadStream ({ defaultMediaType, formats, options, quadStream, req, res, toTriple }) {
+async function sendQuadStream ({ defaultMediaType, formats, options, quadStream, req, res, sendTriples }) {
   // check accept header against list of serializers
   const accepts = req.accepts([...formats.serializers.keys()])
 
@@ -38,7 +38,7 @@ async function sendQuadStream ({ defaultMediaType, formats, options, quadStream,
 
   res.set('content-type', mediaType + '; charset=utf-8')
 
-  if (toTriple) {
+  if (sendTriples) {
     quadStream = quadStream.pipe(new TripleToQuad())
   }
 
@@ -53,7 +53,7 @@ async function sendQuadStream ({ defaultMediaType, formats, options, quadStream,
   })
 }
 
-function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, baseIriFromRequest, toTriple } = {}) {
+function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, baseIriFromRequest, sendTriples } = {}) {
   let getBaseIri
 
   if (baseIriFromRequest === true) {
@@ -79,7 +79,7 @@ function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, base
         quadStream,
         req,
         res,
-        toTriple
+        sendTriples
       })
     }
 

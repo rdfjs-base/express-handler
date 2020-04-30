@@ -278,10 +278,10 @@ describe('response', () => {
       assert.strictEqual(res.text, exampleQuad.nq)
     })
 
-    it('should send serialized triple content if quads are given and toTriple is true', async () => {
+    it('should send serialized triple content if quads are given and sendTriples is true', async () => {
       const app = express()
 
-      app.use(rdfHandler({ toTriple: true }))
+      app.use(rdfHandler({ sendTriples: true }))
       app.use(async (req, res) => {
         await res.quadStream(toStream(exampleQuad.dataset))
       })
