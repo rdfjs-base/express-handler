@@ -103,7 +103,11 @@ function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, base
         options.baseIRI = await getBaseIri(req)
       }
 
-      return readDataset({ factory, options, req })
+      if (!res.locals.dataset) {
+        res.locals.dataset = await readDataset({ factory, options, req })
+      }
+
+      return res.locals.dataset
     }
 
     req.quadStream = userOptions => {
