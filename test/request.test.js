@@ -82,6 +82,27 @@ describe('request', () => {
       assert.strictEqual(toCanonical(dataset), example.nt)
     })
 
+    it('should parse the content and return it as a Dataset when baseIriFromRequest=true', async () => {
+      let dataset = null
+      const app = express()
+
+      app.use(rdfHandler({
+        baseIriFromRequest: true,
+      }))
+      app.use(async (req, res, next) => {
+        dataset = await req.dataset()
+
+        next()
+      })
+
+      await request(app).post('/')
+        .set('host', 'example.com')
+        .set('content-type', 'application/n-triples')
+        .send(`<subject> a <http://example.com/Type> .`)
+
+      assert.strictEqual([...dataset][0].subject.value, 'http://example.com/subject')
+    })
+
     it('should handle parser errors', async () => {
       let error = null
       const app = express()
