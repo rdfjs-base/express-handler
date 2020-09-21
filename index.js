@@ -110,7 +110,7 @@ function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, base
       const options = { ...userOptions }
 
       if (getBaseIri) {
-        const passThrough = new PassThrough()
+        const passThrough = new PassThrough({ objectMode: true })
         Promise.resolve().then(async () => {
           options.baseIRI = getBaseIri(req)
 
