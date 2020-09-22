@@ -113,7 +113,7 @@ function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, base
       if (getBaseIri) {
         const passThrough = new PassThrough({ objectMode: true })
         Promise.resolve().then(async () => {
-          options.baseIRI = getBaseIri(req)
+          options.baseIRI = await getBaseIri(req)
 
           readQuadStream({ formats, mediaType, options, req }).pipe(passThrough)
         })
