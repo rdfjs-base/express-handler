@@ -103,6 +103,30 @@ describe('request', () => {
       assert.strictEqual([...dataset][0].subject.value, 'http://example.com/subject')
     })
 
+    it('should return same dataset when called multiple times', async () => {
+      let first = null
+      let second = null
+      const app = express()
+
+      app.use(rdfHandler())
+      app.use(async (req, res, next) => {
+        first = await req.dataset()
+
+        next()
+      })
+      app.use(async (req, res, next) => {
+        second = await req.dataset()
+
+        next()
+      })
+
+      await request(app).post('/')
+        .set('content-type', 'application/n-triples')
+        .send(`<subject> a <http://example.com/Type> .`)
+
+      assert(first === second)
+    })
+
     it('should handle parser errors', async () => {
       let error = null
       const app = express()
