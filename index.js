@@ -6,6 +6,7 @@ const TripleToQuad = require('rdf-transform-triple-to-quad')
 const { promisify } = require('util')
 const { PassThrough } = require('readable-stream')
 const absoluteUrl = require('absolute-url')
+const once = require('once')
 
 async function readDataset ({ factory, options, req }) {
   return fromStream(factory.dataset(), req.quadStream(options))
@@ -97,18 +98,14 @@ function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, base
       return next()
     }
 
-    req.dataset = async userOptions => {
+    req.dataset = once(async userOptions => {
       const options = { ...userOptions }
       if (getBaseIri) {
         options.baseIRI = await getBaseIri(req)
       }
 
-      if (!res.locals.dataset) {
-        res.locals.dataset = await readDataset({ factory, options, req })
-      }
-
-      return res.locals.dataset
-    }
+      return readDataset({ factory, options, req })
+    })
 
     req.quadStream = userOptions => {
       const options = { ...userOptions }
