@@ -87,7 +87,7 @@ describe('request', () => {
       const app = express()
 
       app.use(rdfHandler({
-        baseIriFromRequest: true,
+        baseIriFromRequest: true
       }))
       app.use(async (req, res, next) => {
         dataset = await req.dataset()
@@ -98,7 +98,7 @@ describe('request', () => {
       await request(app).post('/')
         .set('host', 'example.com')
         .set('content-type', 'application/n-triples')
-        .send(`<subject> a <http://example.com/Type> .`)
+        .send('<subject> a <http://example.com/Type> .')
 
       assert.strictEqual([...dataset][0].subject.value, 'http://example.com/subject')
     })
@@ -122,7 +122,7 @@ describe('request', () => {
 
       await request(app).post('/')
         .set('content-type', 'application/n-triples')
-        .send(`<subject> a <http://example.com/Type> .`)
+        .send('<subject> a <http://example.com/Type> .')
 
       assert(first === second)
     })
