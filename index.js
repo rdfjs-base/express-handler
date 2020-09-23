@@ -8,12 +8,31 @@ const { PassThrough } = require('readable-stream')
 const absoluteUrl = require('absolute-url')
 const once = require('once')
 
-async function readDataset ({ factory, options, req }) {
-  return fromStream(factory.dataset(), req.quadStream(options))
+async function buildOptions (req, userOptions, getBaseIri) {
+  const options = { ...userOptions }
+
+  if (getBaseIri) {
+    options.baseIRI = await getBaseIri(req)
+  }
+
+  return options
 }
 
-function readQuadStream ({ formats, mediaType, options, req }) {
-  return formats.parsers.import(mediaType, req, options)
+async function readDataset ({ factory, options, req, getBaseIri }) {
+  const parserOptions = await buildOptions(req, options, getBaseIri)
+
+  return fromStream(factory.dataset(), req.quadStream(parserOptions))
+}
+
+function readQuadStream ({ formats, mediaType, options, req, getBaseIri }) {
+  const passThrough = new PassThrough({ objectMode: true })
+  Promise.resolve().then(async () => {
+    const parserOptions = await buildOptions(req, options, getBaseIri)
+
+    formats.parsers.import(mediaType, req, parserOptions).pipe(passThrough)
+  })
+
+  return passThrough
 }
 
 async function sendDataset ({ dataset, options, res }) {
@@ -98,31 +117,9 @@ function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, base
       return next()
     }
 
-    req.dataset = once(async userOptions => {
-      const options = { ...userOptions }
-      if (getBaseIri) {
-        options.baseIRI = await getBaseIri(req)
-      }
+    req.dataset = once(options => readDataset({ factory, options, req, getBaseIri }))
 
-      return readDataset({ factory, options, req })
-    })
-
-    req.quadStream = userOptions => {
-      const options = { ...userOptions }
-
-      if (getBaseIri) {
-        const passThrough = new PassThrough({ objectMode: true })
-        Promise.resolve().then(async () => {
-          options.baseIRI = await getBaseIri(req)
-
-          readQuadStream({ formats, mediaType, options, req }).pipe(passThrough)
-        })
-
-        return passThrough
-      }
-
-      return readQuadStream({ formats, mediaType, options, req })
-    }
+    req.quadStream = options => readQuadStream({ formats, mediaType, options, req, getBaseIri })
 
     next()
   }
