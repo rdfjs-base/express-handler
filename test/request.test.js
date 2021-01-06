@@ -233,6 +233,27 @@ describe('request', () => {
 
       assert.deepStrictEqual(givenOptions, options)
     })
+
+    it('throws BadRequest if parser fails', async () => {
+      const app = express()
+
+      app.use(rdfHandler())
+      app.use(async (req, res, next) => {
+        try {
+          await req.dataset()
+        } catch (e) {
+          return next(e)
+        }
+
+        res.end()
+      })
+
+      const response = request(app).post('/')
+        .set('content-type', 'application/n-triples')
+        .send('invalid turtle')
+
+      await response.expect(400)
+    })
   })
 
   describe('quadStream', () => {
@@ -388,6 +409,23 @@ describe('request', () => {
         .send('')
 
       assert.deepStrictEqual(givenOptions, options)
+    })
+
+    it('emits error if parser fails', async () => {
+      const app = express()
+
+      app.use(rdfHandler())
+      app.use(async (req, res, next) => {
+        req.quadStream()
+          .on('data', next)
+          .on('error', next)
+      })
+
+      const response = request(app).post('/')
+        .set('content-type', 'application/n-triples')
+        .send('invalid turtle')
+
+      await response.expect(400)
     })
   })
 })

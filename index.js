@@ -29,7 +29,12 @@ function readQuadStream ({ formats, mediaType, options, req, getBaseIri }) {
   Promise.resolve().then(async () => {
     const parserOptions = await buildOptions(req, options, getBaseIri)
 
-    formats.parsers.import(mediaType, req, parserOptions).pipe(passThrough)
+    const parserStream = formats.parsers.import(mediaType, req, parserOptions)
+    parserStream.on('error', e => {
+      passThrough.emit('error', httpErrors.BadRequest(e.message))
+    })
+
+    parserStream.pipe(passThrough)
   })
 
   return passThrough
