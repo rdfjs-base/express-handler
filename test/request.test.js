@@ -234,7 +234,7 @@ describe('request', () => {
       assert.deepStrictEqual(givenOptions, options)
     })
 
-    it('throws BadRequest if parser fails', async () => {
+    it('throws if parser fails', async () => {
       const app = express()
 
       app.use(rdfHandler())
