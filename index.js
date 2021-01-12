@@ -33,7 +33,7 @@ function readQuadStream ({ formats, mediaType, options, req, getBaseIri }) {
     parserStream.on('error', parseError => {
       passThrough.emit('error', httpError(400, parseError, {
         statusCode: 400,
-        status: 'Bad Request',
+        status: 'Bad Request'
       }))
     })
 
