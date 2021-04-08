@@ -1,5 +1,5 @@
 const defaultFormats = require('@rdfjs/formats-common')
-const httpErrors = require('http-errors')
+const httpError = require('http-errors')
 const rdf = require('@rdfjs/dataset')
 const { fromStream, toStream } = require('rdf-dataset-ext')
 const TripleToQuad = require('rdf-transform-triple-to-quad')
@@ -29,7 +29,15 @@ function readQuadStream ({ formats, mediaType, options, req, getBaseIri }) {
   Promise.resolve().then(async () => {
     const parserOptions = await buildOptions(req, options, getBaseIri)
 
-    formats.parsers.import(mediaType, req, parserOptions).pipe(passThrough)
+    const parserStream = formats.parsers.import(mediaType, req, parserOptions)
+    parserStream.on('error', parseError => {
+      passThrough.emit('error', httpError(400, parseError, {
+        statusCode: 400,
+        status: 'Bad Request'
+      }))
+    })
+
+    parserStream.pipe(passThrough)
   })
 
   return passThrough
@@ -53,7 +61,7 @@ async function sendQuadStream ({ defaultMediaType, formats, options, quadStream,
 
   // if no matching serializer can be found -> 406 not acceptable
   if (!serializer) {
-    throw new httpErrors.NotAcceptable('no matching serializer found')
+    throw new httpError.NotAcceptable('no matching serializer found')
   }
 
   res.set('content-type', mediaType + '; charset=utf-8')
