@@ -1,12 +1,17 @@
-const defaultFormats = require('@rdfjs/formats-common')
-const httpError = require('http-errors')
-const rdf = require('@rdfjs/dataset')
-const { fromStream, toStream } = require('rdf-dataset-ext')
-const TripleToQuad = require('rdf-transform-triple-to-quad')
-const { promisify } = require('util')
-const { PassThrough } = require('readable-stream')
-const absoluteUrl = require('absolute-url')
-const once = require('once')
+import defaultFormats from '@rdfjs/formats-common'
+import httpError from 'http-errors'
+import Environment from '@rdfjs/environment'
+import DataFactory from '@rdfjs/environment/DataFactory.js'
+import DatasetFactory from '@rdfjs/environment/DatasetFactory.js'
+import fromStream from 'rdf-dataset-ext/fromStream.js'
+import toStream from 'rdf-dataset-ext/toStream.js'
+import TripleToQuad from 'rdf-transform-triple-to-quad'
+import { promisify } from 'util'
+import { PassThrough } from 'readable-stream'
+import absoluteUrl from 'absolute-url'
+import once from 'once'
+
+const rdf = new Environment([DatasetFactory, DataFactory])
 
 async function buildOptions (req, userOptions, getBaseIri) {
   const options = { ...userOptions }
@@ -141,4 +146,4 @@ init.attach = async (req, res, options) => {
   return promisify(init(options))(req, res)
 }
 
-module.exports = init
+export default init

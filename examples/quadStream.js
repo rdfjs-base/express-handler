@@ -1,6 +1,6 @@
-const express = require('express')
-const rdf = require('rdf-ext')
-const rdfHandler = require('..')
+import express from 'express'
+import rdf from 'rdf-ext'
+import rdfHandler from '..'
 
 const app = express()
 

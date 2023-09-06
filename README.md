@@ -15,8 +15,8 @@ The package returns a factory function to create express middlewares.
 Adding it to all routes of the app would look like this:
 
 ```
-const express = require('express')
-const rdfHandler = require('@rdfjs/express-handler')
+import express from 'express'
+import rdfHandler from '@rdfjs/express-handler'
 
 const app = express()
 

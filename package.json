@@ -1,6 +1,7 @@
 {
   "name": "@rdfjs/express-handler",
   "version": "1.2.2",
+  "type": "module",
   "description": "Handle incoming and outgoing RDF data in Express",
   "main": "index.js",
   "scripts": {
@@ -24,20 +25,22 @@
   },
   "homepage": "https://github.com/rdfjs-base/express-handler",
   "dependencies": {
-    "@rdfjs/dataset": "^1.0.1",
-    "@rdfjs/formats-common": "^2.0.0",
+    "@rdfjs/environment": "^0.1.2",
+    "@rdfjs/formats-common": "^3.1.0",
     "absolute-url": "^1.2.2",
     "http-errors": "^1.7.2",
     "isstream": "^0.1.2",
     "once": "^1.4.0",
     "rdf-dataset-ext": "^1.0.0",
     "rdf-transform-triple-to-quad": "^1.0.2",
-    "readable-stream": "^3.6.0"
+    "readable-stream": "3 - 4"
   },
   "devDependencies": {
-    "@rdfjs/sink-map": "^1.0.0",
+    "@rdfjs/data-model": "^2",
+    "@rdfjs/dataset": "^2",
+    "@rdfjs/sink-map": "^2.0.0",
     "express": "^4.16.4",
-    "mocha": "^6.0.2",
+    "mocha": "^10.2.0",
     "standard": "^14.3.1",
     "supertest": "^4.0.2"
   }
