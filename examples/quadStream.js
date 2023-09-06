@@ -1,6 +1,6 @@
 import express from 'express'
 import rdf from 'rdf-ext'
-import rdfHandler from '..'
+import rdfHandler from '../index.js'
 
 const app = express()
 

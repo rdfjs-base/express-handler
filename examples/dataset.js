@@ -1,5 +1,5 @@
 import express from 'express'
-import rdfHandler from '..'
+import rdfHandler from '../index.js'
 
 const app = express()
 
