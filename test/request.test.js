@@ -1,14 +1,15 @@
 /* global describe, it */
 
-const assert = require('assert')
-const example = require('./support/example')
-const express = require('express')
-const formatsMock = require('./support/formatsMock')
-const isStream = require('isstream')
-const rdf = require('@rdfjs/dataset')
-const { fromStream, toCanonical } = require('rdf-dataset-ext')
-const rdfHandler = require('../')
-const request = require('supertest')
+import assert from 'assert'
+import * as example from './support/example.js'
+import express from 'express'
+import formatsMock from './support/formatsMock.js'
+import isStream from 'isstream'
+import rdf from '@rdfjs/dataset'
+import fromStream from 'rdf-dataset-ext/fromStream.js'
+import toCanonical from 'rdf-dataset-ext/toCanonical.js'
+import rdfHandler from '../index.js'
+import request from 'supertest'
 
 describe('request', () => {
   describe('dataset', () => {

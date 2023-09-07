@@ -1,7 +1,7 @@
-const SinkMap = require('@rdfjs/sink-map')
-const { Readable } = require('stream')
+import SinkMap from '@rdfjs/sink-map'
+import { Readable } from 'stream'
 
-function formatsMock ({ parse, serialize }) {
+export default function formatsMock ({ parse, serialize }) {
   const formats = {
     parsers: new SinkMap(),
     serializers: new SinkMap()
@@ -45,5 +45,3 @@ function formatsMock ({ parse, serialize }) {
 
   return formats
 }
-
-module.exports = formatsMock

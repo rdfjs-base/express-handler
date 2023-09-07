@@ -1,5 +1,5 @@
-const express = require('express')
-const rdfHandler = require('..')
+import express from 'express'
+import rdfHandler from '../index.js'
 
 const app = express()
 

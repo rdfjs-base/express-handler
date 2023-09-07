@@ -1,15 +1,15 @@
 /* global describe, it */
 
-const assert = require('assert')
-const example = require('./support/example')
-const exampleQuad = require('./support/exampleQuad')
-const express = require('express')
-const formatsMock = require('./support/formatsMock')
-const rdf = require('@rdfjs/dataset')
-const { toStream } = require('rdf-dataset-ext')
-const rdfHandler = require('../')
-const request = require('supertest')
-const SinkMap = require('@rdfjs/sink-map')
+import assert from 'assert'
+import * as example from './support/example.js'
+import * as exampleQuad from './support/exampleQuad.js'
+import express from 'express'
+import formatsMock from './support/formatsMock.js'
+import rdf from '@rdfjs/dataset'
+import toStream from 'rdf-dataset-ext/toStream.js'
+import rdfHandler from '../index.js'
+import request from 'supertest'
+import SinkMap from '@rdfjs/sink-map'
 
 describe('response', () => {
   describe('dataset', () => {

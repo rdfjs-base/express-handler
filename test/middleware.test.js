@@ -1,10 +1,10 @@
 /* global describe, it */
 
-const assert = require('assert')
-const example = require('./support/example')
-const express = require('express')
-const rdfHandler = require('../')
-const request = require('supertest')
+import assert from 'assert'
+import * as example from './support/example.js'
+import express from 'express'
+import rdfHandler from '../index.js'
+import request from 'supertest'
 
 describe('middleware', () => {
   it('should return a middleware function', () => {
