@@ -5,7 +5,7 @@
   "description": "Handle incoming and outgoing RDF data in Express",
   "main": "index.js",
   "scripts": {
-    "test": "standard && mocha"
+    "test": "standard && c8 --reporter=lcov --reporter=text mocha"
   },
   "repository": {
     "type": "git",
@@ -38,6 +38,7 @@
     "@rdfjs/data-model": "^2",
     "@rdfjs/dataset": "^2",
     "@rdfjs/sink-map": "^2.0.0",
+    "c8": "^9.1.0",
     "express": "^4.16.4",
     "is-stream": "^3.0.0",
     "mocha": "^10.2.0",
