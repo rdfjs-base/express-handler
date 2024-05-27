@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/rdfjs-base/express-handler",
   "dependencies": {
-    "@rdfjs/environment": "^0.1.2",
+    "@rdfjs/environment": "^1.0.0",
     "@rdfjs/formats-common": "^3.1.0",
     "absolute-url": "^1.2.2",
     "http-errors": "^2.0.0",
