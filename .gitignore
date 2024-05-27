@@ -1,5 +1,3 @@
+coverage
 node_modules
-
-# Ignore IntelliJ project files.
-.idea
-*.iml
+package-lock.json

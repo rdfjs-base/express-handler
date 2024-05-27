@@ -1,6 +1,6 @@
 # @rdfjs/express-handler
 
-[![Build Status](https://travis-ci.org/rdf-js/express-handler.svg?branch=master)](https://travis-ci.org/rdfjs/express-handler)
+[![build status](https://img.shields.io/github/actions/workflow/status/rdfjs-base/express-handler/test.yaml?branch=master)](https://github.com/rdfjs-base/express-handler/actions/workflows/test.yaml)
 [![npm version](https://img.shields.io/npm/v/@rdfjs/express-handler.svg)](https://www.npmjs.com/package/@rdfjs/express-handler)
 
 The `@rdfjs/express-handler` middleware provides methods to parse incoming RDF data from request with content like `POST` or `PUT` requests.
