@@ -40,7 +40,7 @@
     "@rdfjs/sink-map": "^2.0.0",
     "c8": "^9.1.0",
     "express": "^4.16.4",
-    "is-stream": "^3.0.0",
+    "is-stream": "^4.0.1",
     "mocha": "^10.2.0",
     "rdf-ext": "^2.2.0",
     "standard": "^17.1.0",
