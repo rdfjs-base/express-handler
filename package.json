@@ -44,6 +44,6 @@
     "mocha": "^10.2.0",
     "rdf-ext": "^2.2.0",
     "standard": "^17.1.0",
-    "supertest": "^4.0.2"
+    "supertest": "^7.0.0"
   }
 }
