@@ -1,12 +1,12 @@
-import defaultFormats from '@rdfjs/formats-common'
+import { promisify } from 'node:util'
+import defaultFormats from '@rdfjs/formats'
 import httpError from 'http-errors'
 import Environment from '@rdfjs/environment'
-import DataFactory from '@rdfjs/environment/DataFactory.js'
-import DatasetFactory from '@rdfjs/environment/DatasetFactory.js'
+import DataFactory from '@rdfjs/data-model/Factory.js'
+import DatasetFactory from '@rdfjs/dataset/Factory.js'
 import fromStream from 'rdf-dataset-ext/fromStream.js'
 import toStream from 'rdf-dataset-ext/toStream.js'
 import TripleToQuad from 'rdf-transform-triple-to-quad'
-import { promisify } from 'util'
 import { PassThrough } from 'readable-stream'
 import absoluteUrl from 'absolute-url'
 import once from 'once'
@@ -90,10 +90,8 @@ function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, base
   let getBaseIri
 
   if (baseIriFromRequest === true) {
-    getBaseIri = (req) => {
-      absoluteUrl.attach(req)
-
-      return req.absoluteUrl()
+    getBaseIri = req => {
+      return absoluteUrl(req).toString()
     }
   } else if (typeof baseIriFromRequest === 'function') {
     getBaseIri = baseIriFromRequest
