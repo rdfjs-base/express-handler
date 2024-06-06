@@ -1,8 +1,6 @@
-import datasetFactory from '@rdfjs/dataset'
-import rdf from '@rdfjs/data-model'
-import toCanonical from 'rdf-dataset-ext/toCanonical.js'
+import rdf from 'rdf-ext'
 
-export const dataset = datasetFactory.dataset([
+export const dataset = rdf.dataset([
   rdf.quad(
     rdf.namedNode('http://example.org/subject'),
     rdf.namedNode('http://example.org/predicate'),
@@ -10,4 +8,4 @@ export const dataset = datasetFactory.dataset([
     rdf.namedNode('http://example.org/graph'))
 ])
 
-export const nq = toCanonical(dataset)
+export const nq = dataset.toCanonical()

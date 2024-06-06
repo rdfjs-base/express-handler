@@ -5,11 +5,11 @@ import * as example from './support/example.js'
 import * as exampleQuad from './support/exampleQuad.js'
 import express from 'express'
 import formatsMock from './support/formatsMock.js'
-import rdf from '@rdfjs/dataset'
-import toStream from 'rdf-dataset-ext/toStream.js'
+import rdf from 'rdf-ext'
 import rdfHandler from '../index.js'
 import request from 'supertest'
 import SinkMap from '@rdfjs/sink-map'
+import { Readable } from 'readable-stream'
 
 describe('response', () => {
   describe('dataset', () => {
@@ -182,7 +182,7 @@ describe('response', () => {
       app.use(rdfHandler({ formats: customFormats }))
       app.use(async (req, res, next) => {
         try {
-          await res.quadStream(toStream(rdf.dataset()))
+          await res.quadStream(Readable.from([]))
         } catch (err) {}
 
         next()
@@ -227,7 +227,7 @@ describe('response', () => {
 
       app.use(rdfHandler({ formats: customFormats }))
       app.use(async (req, res) => {
-        await res.quadStream(toStream(rdf.dataset()))
+        await res.quadStream(Readable.from([]))
       })
 
       const res = await request(app).get('/')
@@ -241,7 +241,7 @@ describe('response', () => {
 
       app.use(rdfHandler())
       app.use(async (req, res) => {
-        await res.quadStream(toStream(example.dataset))
+        await res.quadStream(Readable.from([]))
       })
 
       const res = await request(app).get('/')
@@ -255,7 +255,7 @@ describe('response', () => {
 
       app.use(rdfHandler())
       app.use(async (req, res) => {
-        await res.quadStream(toStream(example.dataset))
+        await res.quadStream(example.dataset.toStream())
       })
 
       const res = await request(app).get('/')
@@ -269,7 +269,7 @@ describe('response', () => {
 
       app.use(rdfHandler())
       app.use(async (req, res) => {
-        await res.quadStream(toStream(exampleQuad.dataset))
+        await res.quadStream(exampleQuad.dataset.toStream())
       })
 
       const res = await request(app).get('/')
@@ -283,7 +283,7 @@ describe('response', () => {
 
       app.use(rdfHandler({ sendTriples: true }))
       app.use(async (req, res) => {
-        await res.quadStream(toStream(exampleQuad.dataset))
+        await res.quadStream(exampleQuad.dataset.toStream())
       })
 
       const res = await request(app).get('/')
@@ -330,7 +330,7 @@ describe('response', () => {
 
       app.use(rdfHandler({ formats: customFormats }))
       app.use(async (req, res, next) => {
-        await res.quadStream(toStream(rdf.dataset()), options)
+        await res.quadStream(Readable.from([]), options)
 
         next()
       })

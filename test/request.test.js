@@ -5,9 +5,7 @@ import * as example from './support/example.js'
 import express from 'express'
 import formatsMock from './support/formatsMock.js'
 import { isStream } from 'is-stream'
-import rdf from '@rdfjs/dataset'
-import fromStream from 'rdf-dataset-ext/fromStream.js'
-import toCanonical from 'rdf-dataset-ext/toCanonical.js'
+import rdf from 'rdf-ext'
 import rdfHandler from '../index.js'
 import request from 'supertest'
 
@@ -80,7 +78,7 @@ describe('request', () => {
         .set('content-type', 'application/n-triples')
         .send(example.nt)
 
-      assert.strictEqual(toCanonical(dataset), example.nt)
+      assert.strictEqual(rdf.dataset(dataset).toCanonical(), example.nt)
     })
 
     it('should parse the content and return it as a Dataset when baseIriFromRequest=true', async () => {
@@ -327,9 +325,9 @@ describe('request', () => {
 
       assert(isStream(quadStream))
 
-      const dataset = await fromStream(rdf.dataset(), quadStream)
+      const dataset = await rdf.dataset().import(quadStream)
 
-      assert.strictEqual(toCanonical(dataset), example.nt)
+      assert.strictEqual(dataset.toCanonical(), example.nt)
     })
 
     it('should forward options to the parser', async () => {
