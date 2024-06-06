@@ -1,12 +1,10 @@
-import datasetFactory from '@rdfjs/dataset'
-import rdf from '@rdfjs/data-model'
-import toCanonical from 'rdf-dataset-ext/toCanonical.js'
+import rdf from 'rdf-ext'
 
-export const dataset = datasetFactory.dataset([
+export const dataset = rdf.dataset([
   rdf.quad(
     rdf.namedNode('http://example.org/subject'),
     rdf.namedNode('http://example.org/predicate'),
     rdf.literal('object'))
 ])
 
-export const nt = toCanonical(dataset)
+export const nt = dataset.toCanonical()

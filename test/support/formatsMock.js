@@ -1,5 +1,5 @@
 import SinkMap from '@rdfjs/sink-map'
-import { Readable } from 'stream'
+import { Readable } from 'readable-stream'
 
 export default function formatsMock ({ parse, serialize }) {
   const formats = {

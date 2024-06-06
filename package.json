@@ -32,7 +32,6 @@
     "absolute-url": "^2.0.0",
     "http-errors": "^2.0.0",
     "once": "^1.4.0",
-    "rdf-dataset-ext": "^1.0.0",
     "rdf-transform-triple-to-quad": "^2.0.0",
     "readable-stream": "3 - 4"
   },

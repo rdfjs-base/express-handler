@@ -4,10 +4,8 @@ import httpError from 'http-errors'
 import Environment from '@rdfjs/environment'
 import DataFactory from '@rdfjs/data-model/Factory.js'
 import DatasetFactory from '@rdfjs/dataset/Factory.js'
-import fromStream from 'rdf-dataset-ext/fromStream.js'
-import toStream from 'rdf-dataset-ext/toStream.js'
 import TripleToQuad from 'rdf-transform-triple-to-quad'
-import { PassThrough } from 'readable-stream'
+import { PassThrough, Readable } from 'readable-stream'
 import absoluteUrl from 'absolute-url'
 import once from 'once'
 
@@ -24,9 +22,15 @@ async function buildOptions (req, userOptions, getBaseIri) {
 }
 
 async function readDataset ({ factory, options, req, getBaseIri }) {
+  const dataset = factory.dataset()
   const parserOptions = await buildOptions(req, options, getBaseIri)
+  const quadStream = req.quadStream(parserOptions)
 
-  return fromStream(factory.dataset(), req.quadStream(parserOptions))
+  for await (const quad of quadStream) {
+    dataset.add(quad)
+  }
+
+  return dataset
 }
 
 function readQuadStream ({ formats, mediaType, options, req, getBaseIri }) {
@@ -49,7 +53,7 @@ function readQuadStream ({ formats, mediaType, options, req, getBaseIri }) {
 }
 
 async function sendDataset ({ dataset, options, res }) {
-  await res.quadStream(toStream(dataset), options)
+  await res.quadStream(Readable.from(dataset), options)
 }
 
 async function sendQuadStream ({ defaultMediaType, formats, options, quadStream, req, res, sendTriples }) {
