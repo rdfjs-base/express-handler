@@ -81,6 +81,24 @@ describe('request', () => {
       assert.strictEqual(rdf.dataset(dataset).toCanonical(), example.nt)
     })
 
+    it('should support content-type headers with charset', async () => {
+      let dataset = null
+      const app = express()
+
+      app.use(rdfHandler())
+      app.use(async (req, res, next) => {
+        dataset = await req.dataset()
+
+        next()
+      })
+
+      await request(app).post('/')
+        .set('content-type', 'application/n-triples; charset=utf-8')
+        .send(example.nt)
+
+      assert.strictEqual(rdf.dataset(dataset).toCanonical(), example.nt)
+    })
+
     it('should parse the content and return it as a Dataset when baseIriFromRequest=true', async () => {
       let dataset = null
       const app = express()
@@ -321,6 +339,28 @@ describe('request', () => {
 
       await request(app).post('/')
         .set('content-type', 'application/n-triples')
+        .send(example.nt)
+
+      assert(isStream(quadStream))
+
+      const dataset = await rdf.dataset().import(quadStream)
+
+      assert.strictEqual(dataset.toCanonical(), example.nt)
+    })
+
+    it('should support content-type headers with charset', async () => {
+      let quadStream = null
+      const app = express()
+
+      app.use(rdfHandler())
+      app.use(async (req, res, next) => {
+        quadStream = await req.quadStream()
+
+        next()
+      })
+
+      await request(app).post('/')
+        .set('content-type', 'application/n-triples; charset=utf-8')
         .send(example.nt)
 
       assert(isStream(quadStream))
