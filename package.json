@@ -1,6 +1,6 @@
 {
   "name": "@rdfjs/express-handler",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "type": "module",
   "description": "Handle incoming and outgoing RDF data in Express",
   "main": "index.js",
