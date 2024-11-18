@@ -118,7 +118,7 @@ function init ({ factory = rdf, formats = defaultFormats, defaultMediaType, base
       })
     }
 
-    const contentType = req.get('content-type')
+    const contentType = req.get('content-type')?.split(';')[0]
 
     // only process body if content type header was set
     if (!contentType) {
